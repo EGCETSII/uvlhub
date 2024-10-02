@@ -8,13 +8,14 @@ on:
     branches:
       - main
 
-permissions:
-  issues: write
-  contents: read
-
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+
     services:
       mysql:
         image: mysql:5.7
@@ -34,7 +35,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.12'
+        python-version: ${{matrix.python-version}}
 
     - name: Install dependencies
       run: |
@@ -44,87 +45,14 @@ jobs:
     - name: Check for outdated dependencies
       run: |
           pip list --outdated > outdated_dependencies.txt
-      
+    
     - name: Show outdated dependencies
       run: cat outdated_dependencies.txt
 
-    - name: Audit dependencies for security issues
-      id: audit
+    - name: Security audit with pip-audit
       run: |
         pip install pip-audit
-        pip-audit -o audit_report.json --format json || true
-    
-    - name: Show audit report
-      run: |
-        if [ -f audit_report.json ]; then
-            cat audit_report.json
-        else
-             echo "No se encontró audit_report.json."
-        fi
-    
-    - name: Prepare notification
-      run: |
-            # Leer dependencias obsoletas
-            if [ -f outdated_dependencies.txt ]; then
-                outdated=$(awk 'NR>2 {print $1, $2, $3}' outdated_dependencies.txt | tr '\n' ';')
-            else
-                outdated="No se encontraron dependencias obsoletas."
-            fi
-      
-            # Leer vulnerabilidades desde el archivo JSON
-            if [ -f audit_report.json ]; then
-                vulnerabilities=$(cat audit_report.json)
-            else
-                vulnerabilities="No se encontraron vulnerabilidades."
-            fi
-      
-            echo "outdated_dependencies=$outdated" >> $GITHUB_ENV
-            echo "vulnerabilities=$vulnerabilities" >> $GITHUB_ENV
-    
-    - name: Create GitHub issue for outdated dependencies and vulnerabilities
-      uses: actions/github-script@v6
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        script: |
-                const title = "Notificación de Dependencias";
-                
-                // Formatear dependencias obsoletas en tabla
-                const outdatedDeps = process.env.outdated_dependencies
-                  .split(';')
-                  .filter(dep => dep.trim())
-                  .map(dep => `| ${dep.split(' ').join(' | ')} |`)
-                  .join('\n');
-          
-                const outdatedTable = `| Paquete | Versión instalada | Nueva versión |\n|---------|------------------|---------------|\n${outdatedDeps || '| No se encontraron dependencias obsoletas |'}`;
-          
-                // Procesar vulnerabilidades y construir tabla
-                const vulnerabilitiesData = JSON.parse(process.env.vulnerabilities);
-                const vulnerableDeps = vulnerabilitiesData.dependencies.filter(dep => dep.vulns.length > 0);
-          
-                const vulnerabilityTable = vulnerableDeps.length > 0 
-                  ? vulnerableDeps.map(dep => 
-                      dep.vulns.map(vuln => 
-                        `| ${dep.name} | ${dep.version} | ${vuln.id} | ${vuln.fix_versions || 'No disponible'} |`
-                      ).join('\n')
-                    ).join('\n')
-                  : '| No se encontraron vulnerabilidades |';
-          
-                const vulnsTable = `| Nombre | Versión | ID | Versión de arreglo |\n|--------|---------|----|--------------------|\n${vulnerabilityTable}`;
-          
-                const body = `
-                  ### Dependencias obsoletas:
-                  ${outdatedTable}
-                  
-                  ### Vulnerabilidades encontradas:
-                  ${vulnsTable}
-                `;
-          
-                await github.rest.issues.create({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  title: title,
-                  body: body
-                });
+        pip-audit || true
   
     - name: Upload coverage to Codacy
       run: |
