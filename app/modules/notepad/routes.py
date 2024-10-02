@@ -95,7 +95,7 @@ def delete_notepad(notepad_id):
         return redirect(url_for('notepad.index'))
     res = notepad_service.delete(notepad)
     if res:
-        flash('Notepad deleted successfully', 'success')
+        flash('Notepad successfully deleted', 'success')
     else:
         flash('Notepad deletion failed', 'error')
     return redirect(url_for('notepad.index'))
