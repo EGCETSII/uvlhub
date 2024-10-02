@@ -1,10 +1,6 @@
 var currentId = 0;
         var amount_authors = 0;
 
-        function show_upload_dataset() {
-            document.getElementById("upload_dataset").style.display = "block";
-        }
-
         function generateIncrementalId() {
             return currentId++;
         }
