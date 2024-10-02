@@ -33,7 +33,8 @@ jobs:
         python-version: '3.12'
     
     - name: Check for outdated dependencies
-      run: pip list --outdated
+      run: |
+        pip list --outdated
 
     - name: Install dependencies
       run: |
