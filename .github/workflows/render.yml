@@ -1,17 +1,15 @@
 name: Deploy to Render
 
 on:
-    push:
-      branches:
-        - main
     pull_request:
-      branches:
-        - main
+      types:
+        - closed
 
 jobs:
 
   deploy:
     name: Deploy to Render
+    if: github.event.pull_request.merged
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
