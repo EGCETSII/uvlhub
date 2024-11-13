@@ -117,3 +117,30 @@ def test_service_create_with_profile_fail_no_password(clean_database):
 
     assert UserRepository().count() == 0
     assert UserProfileRepository().count() == 0
+
+
+def test_service_create_with_profile_template_injection(clean_database):
+    data = {
+        # This is a template injection attack, if it is not caught, it will evaluate the expression.
+        "name": "{{7*7}}",
+        "surname": "Foo",
+        "email": "test@example.com",
+        "password": "testpassword"
+    }
+    assert UserRepository().count() == 0
+    assert UserProfileRepository().count() == 0
+    assert data.values.__name__ != "49"
+    
+    
+def test_service_create_with_profile_sqlinjection(clean_database):
+    data = {
+        # This is a template injection attack, if it is not caught, it will evaluate the expression.
+        "name": "or""=",
+        "surname": "Foo",
+        "email": "test@example.com",
+        "password": ""
+    }
+    with pytest.raises(ValueError, match="Password is required."):
+        AuthenticationService().create_with_profile(**data)
+    assert UserRepository().count() == 0
+    assert UserProfileRepository().count() == 0
