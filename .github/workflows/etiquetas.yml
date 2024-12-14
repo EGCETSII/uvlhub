@@ -1,0 +1,64 @@
+name: "Auto Label Pull Requests"
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize]  # Corre cuando se abre o actualiza una PR.
+
+jobs:
+  label-pr:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check Out Repository
+        uses: actions/checkout@v3
+
+      - name: Auto Label PR
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const prTitle = context.payload.pull_request.title.toLowerCase();
+            const prBody = context.payload.pull_request.body.toLowerCase();
+            const branchName = context.payload.pull_request.head.ref.toLowerCase();
+
+            const changedFiles = await github.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+            });
+
+            const labelsToAdd = [];
+
+            // Etiquetar según palabras clave en el título de la PR
+            if (prTitle.includes("bug")) {
+              labelsToAdd.push("bug");
+            }
+            if (prTitle.includes("feature")) {
+              labelsToAdd.push("enhancement");
+            }
+
+            // Etiquetar según el nombre de la rama
+            if (branchName.includes("task")) {
+              labelsToAdd.push("task");
+            }
+            if (branchName.includes("incidence")) {
+              labelsToAdd.push("incidence");
+            }
+
+            // Etiquetar según los archivos modificados
+            const fileExtensions = changedFiles.data.map(file => file.filename.split('.').pop());
+            if (fileExtensions.some(ext => ["html", "js", "css"].includes(ext))) {
+              labelsToAdd.push("frontend");
+            }
+            if (fileExtensions.some(ext => ["py", "java", "rb"].includes(ext))) {
+              labelsToAdd.push("backend");
+            }
+
+            // Aplicar las etiquetas si hay alguna para añadir
+            if (labelsToAdd.length > 0) {
+              await github.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                labels: labelsToAdd,
+              });
+            }
