@@ -1,0 +1,42 @@
+Metadata-Version: 2.1
+Name: flamapy-sat
+Version: 2.0.0.dev1
+Summary: flamapy-sat is a plugin to flamapy module
+Home-page: https://github.com/flamapy/pysat_metamodel
+Author: Flamapy
+Author-email: flamapy@us.es
+License: UNKNOWN
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+Requires-Dist: flamapy-fw ~=2.0.0.dev1
+Requires-Dist: flamapy-fm ~=2.0.0.dev1
+Requires-Dist: python-sat >=0.1.7.dev1
+Provides-Extra: dev
+Requires-Dist: pytest ; extra == 'dev'
+Requires-Dist: pytest-mock ; extra == 'dev'
+Requires-Dist: prospector ; extra == 'dev'
+Requires-Dist: mypy ; extra == 'dev'
+Requires-Dist: coverage ; extra == 'dev'
+
+# pysat_metamodel
+
+This repository will host the pysat metamodel and its operation implementation
+
+
+## Install for development
+
+``` bash
+pip install -e .
+```
+
+## Make sure that you have installed python-dev 
+
+``` bash
+sudo apt install python-dev #python3-dev in Ubuntu derivatives
+```
+
+

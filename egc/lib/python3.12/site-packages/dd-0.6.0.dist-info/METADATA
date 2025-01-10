@@ -1,0 +1,29 @@
+Metadata-Version: 2.1
+Name: dd
+Version: 0.6.0
+Summary: Binary decision diagrams implemented in pure Python, as well as Cython wrappers of CUDD, Sylvan, and BuDDy.
+Home-page: https://github.com/tulip-control/dd
+Author: Caltech Control and Dynamical Systems
+Author-email: tulip@tulip-control.org
+License: BSD
+Project-URL: Bug Tracker, https://github.com/tulip-control/dd/issues
+Project-URL: Documentation, https://github.com/tulip-control/dd/blob/main/doc.md
+Project-URL: Source Code, https://github.com/tulip-control/dd
+Keywords: bdd,binary decision diagram,decision diagram,boolean,networkx,dot,graphviz
+Classifier: Development Status :: 2 - Pre-Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Cython
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Topic :: Scientific/Engineering
+Classifier: Topic :: Software Development
+Requires-Python: >=3.11
+License-File: LICENSE
+Requires-Dist: astutils>=0.0.5
+Requires-Dist: networkx>=2.4
+Requires-Dist: ply<=3.10,>=3.4
+Requires-Dist: setuptools>=65.6.0
+
+dd is a package for working with binary decision diagrams that includes both a pure Python implementation and Cython bindings to C libraries (CUDD, Sylvan, BuDDy). The Python and Cython modules implement the same API, so the same user code runs with both. All the standard operations on BDDs are available, including dynamic variable reordering using sifting, garbage collection, dump/load from files, plotting, and a parser of quantified Boolean expressions. More details can be found in the README at: https://github.com/tulip-control/dd
