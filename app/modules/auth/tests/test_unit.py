@@ -73,6 +73,7 @@ def test_signup_user_successful(test_client):
         follow_redirects=True,
     )
     assert response.request.path == url_for("public.index"), "Signup was unsuccessful"
+    test_client.get("/logout", follow_redirects=True)
 
 
 def test_service_create_with_profie_success(clean_database):
