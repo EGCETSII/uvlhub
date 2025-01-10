@@ -1,0 +1,3 @@
+[console_scripts]
+flamapy-fm-cli = flamapy.interfaces.command_line:flama_fm
+
