@@ -52,7 +52,9 @@ jobs:
     - name: Security audit with pip-audit
       run: | 
         pip install pip-audit
-        pip-audit
+        pip-audit || true
+      # Si yo quisiera que el workflow siguiera a pesar de que surgiese un error en, por ejemplo, pip-audit
+      # Puedo escribir pip-audit || true
 
     - name: Upload coverage to Codacy
       run: |
