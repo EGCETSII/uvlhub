@@ -11,3 +11,4 @@ class Notepad(db.Model):
     def __repr__(self):
         return f'Notepad<{self.id}, Title={self.title}, Author={self.user.username}>'
 
+# Cambio para aplicar el codacy jajaja
