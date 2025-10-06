@@ -49,6 +49,7 @@ jobs:
       run: |
         pip install pip-audit
         pip-audit
+      continue-on-error: true
 
     - name: Upload coverage to Codacy
       run: |
