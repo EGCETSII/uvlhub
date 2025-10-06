@@ -37,6 +37,10 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
+    - name: Check for outdated dependencies
+      run: |
+        pip list --outdated
+
     - name: Upload coverage to Codacy
       run: |
         pip install codacy-coverage
