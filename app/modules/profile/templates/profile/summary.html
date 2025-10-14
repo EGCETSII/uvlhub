@@ -51,7 +51,7 @@
                                 <td>
 
                                     {% if dataset.ds_meta_data.dataset_doi %}
-                                        <a href="{{ dataset.get_uvlhub_doi() }}">
+                                        <a href="{{ url_for('dataset.subdomain_index', doi=dataset.ds_meta_data.dataset_doi) }}">
                                             {{ dataset.ds_meta_data.title }}
                                         </a>
                                     {% else %}
