@@ -1,0 +1,24 @@
+{% extends 'base_template.html' %}
+
+{% block content %}
+  <h2>Enable Two-Factor Authentication</h2>
+
+  <p>Scan the QR code below with your authenticator app (Google Authenticator, Authy, etc.), or use the secret key.</p>
+
+  <div>
+    <img src="{{ url_for('auth.two_factor_qrcode') }}" alt="QR code" />
+  </div>
+
+  <p>Secret: <code>{{ secret }}</code></p>
+
+  <form method="post" action="{{ url_for('auth.two_factor_confirm') }}">
+    {{ form.csrf_token }}
+    <div>
+      <label for="token">Enter the code from your app to confirm</label>
+      <input id="token" name="token" type="text" />
+    </div>
+    <button type="submit">Confirm and enable 2FA</button>
+  </form>
+
+  <p>If you don't want to enable 2FA, you can remove the secret from your profile (not implemented here).</p>
+{% endblock %}

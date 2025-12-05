@@ -4,6 +4,9 @@ from app import db
 from app.modules.auth.models import User
 from app.modules.conftest import login, logout
 from app.modules.profile.models import UserProfile
+from app.modules.auth.repositories import UserRepository
+from flask import url_for, session
+import pyotp
 
 
 @pytest.fixture(scope="module")
@@ -13,7 +16,8 @@ def test_client(test_client):
     for module testing (por example, new users)
     """
     with test_client.application.app_context():
-        user_test = User(email="user@example.com", password="test1234")
+        user_test = User(email="user@example.com")
+        user_test.set_password("test1234")
         db.session.add(user_test)
         db.session.commit()
 
@@ -36,3 +40,9 @@ def test_edit_profile_page_get(test_client):
     assert b"Edit profile" in response.data, "The expected content is not present on the page"
 
     logout(test_client)
+
+def test_2fa_setup_requires_auth(test_client):
+    response = test_client.get("/2fa/setup", follow_redirects=True)
+    assert response.request.path == url_for("auth.login")
+
+

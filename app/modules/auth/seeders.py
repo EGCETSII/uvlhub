@@ -10,10 +10,18 @@ class AuthSeeder(BaseSeeder):
     def run(self):
 
         # Seeding users
-        users = [
-            User(email="user1@example.com", password="1234"),
-            User(email="user2@example.com", password="1234"),
+        # Create User instances and ensure passwords are hashed via `set_password`
+        raw_users = [
+            ("user1@example.com", "1234"),
+            ("user2@example.com", "1234"),
         ]
+
+        users = []
+        for email, plain_pw in raw_users:
+            u = User(email=email)
+            # Use model helper to set a proper hash instead of storing plaintext
+            u.set_password(plain_pw)
+            users.append(u)
 
         # Inserted users with their assigned IDs are returned by `self.seed`.
         seeded_users = self.seed(users)

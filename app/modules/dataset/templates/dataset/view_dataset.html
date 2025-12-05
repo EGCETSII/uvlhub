@@ -237,7 +237,7 @@
 
                 <div class="row">
                     <div class="col-12 d-flex justify-content-between align-items-center">
-                        <h4 style="margin-bottom: 0px">UVL models</h4>
+                        <h4 style="margin-bottom: 0px">GAMES models</h4>
                         <h4 style="margin-bottom: 0px;"><span class="badge bg-dark">{{ dataset.get_files_count() }}</span></h4>
                     </div>
                 </div>
@@ -279,7 +279,10 @@
                                     </button>
                                     <ul class="dropdown-menu" aria-labelledby="btnGroupDrop{{ file.id }}">
                                         <li>
-                                            <a class="dropdown-item" href="javascript:void(0);" onclick="checkUVL('{{ file.id }}')">Syntax check</a>
+                                            <a class="dropdown-item" href="javascript:void(0);" onclick="checkUVL('{{ file.id }}')">Syntax check UVL</a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" href="javascript:void(0);" onclick="checkCSV('{{ file.id }}')">Syntax check Game</a>
                                         </li>
                                         <!--
                                         <li>
@@ -332,6 +335,30 @@
         </a>
     </div>
     
+</div>
+
+<!-- Recomendaciones de datasets similares -->
+<div class="card mt-4">
+    <div class="card-body">
+        <h4 class="mb-3">Recommendations of similar datasets</h4>
+        {% if recommended %}
+            <ul class="list-group list-group-flush">
+                {% for ds in recommended %}
+                    <li class="list-group-item">
+                        <a href="{{ url_for('dataset.subdomain_index', doi=ds.ds_meta_data.dataset_doi) }}">
+                            {{ ds.ds_meta_data.title }}
+                        </a>
+                        <br>
+                        <small class="text-muted">
+                            {{ ds.get_cleaned_publication_type() }} · {{ ds.get_files_count() }} files
+                        </small>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-muted">No related datasets found.</p>
+        {% endif %}
+    </div>
 </div>
 
 <!-- Modal-->
@@ -431,7 +458,45 @@
             outputDiv.innerHTML = `<span class="badge badge-danger">An unexpected error occurred: ${error.message}</span>`;
         });
 }
+function checkCSV(file_id) {
+    const outputDiv = document.getElementById('check_' + file_id);
+    outputDiv.innerHTML = ''; // Clear previous output
 
+    fetch(`/flamapy/check_csv/${file_id}`)
+        .then(response => {
+            return response.json().then(data => ({
+                status: response.status,
+                data
+            }));
+        })
+        .then(({ status, data }) => {
+            if (status === 400) {
+                // Display errors
+                if (data.errors) {
+                    outputDiv.innerHTML = '<span class="badge badge-danger">Errors:</span>';
+                    data.errors.forEach(error => {
+                        const errorElement = document.createElement('span');
+                        errorElement.className = 'badge badge-danger';
+                        errorElement.textContent = error;
+                        outputDiv.appendChild(errorElement);
+                        outputDiv.appendChild(document.createElement('br')); // Line break for better readability
+                    });
+                } else {
+                    outputDiv.innerHTML = `<span class="badge badge-danger">Error: ${data.error}</span>`;
+                }
+            } else if (status === 200) {
+                // Display success message
+                outputDiv.innerHTML = '<span class="badge badge-success">Valid Model</span>';
+            } else {
+                // Handle unexpected status
+                outputDiv.innerHTML = `<span class="badge badge-warning">Unexpected response status: ${status}</span>`;
+            }
+        })
+        .catch(error => {
+            // Handle fetch errors
+            outputDiv.innerHTML = `<span class="badge badge-danger">An unexpected error occurred: ${error.message}</span>`;
+        });
+}
 
     /*
     async function valid() {

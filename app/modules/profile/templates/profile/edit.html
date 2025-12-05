@@ -100,6 +100,24 @@
                 </div>
             </form>
 
+            <!-- Two-factor authentication section -->
+            <div class="mt-4">
+                <h3 class="h4">Two-Factor Authentication</h3>
+                {% if current_user.two_factor_enabled %}
+                    <p>
+                        <span class="badge bg-success">Enabled</span>
+                        Two-factor authentication is active on your account.
+                    </p>
+                {% else %}
+                    <p>
+                        <span class="badge bg-warning">Not Enabled</span>
+                        Add an extra layer of security to your account by enabling two-factor authentication.
+                    </p>
+                    <a href="{{ url_for('auth.two_factor_setup') }}" class="btn btn-primary">
+                        <i class="align-middle" data-feather="shield"></i> Enable 2FA
+                    </a>
+                {% endif %}
+            </div>
 
         </div>
 

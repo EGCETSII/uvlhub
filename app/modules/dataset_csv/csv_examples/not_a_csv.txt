@@ -1,0 +1,2 @@
+This is a plain text file, not a CSV.
+It should be rejected by the upload endpoint because of extension.

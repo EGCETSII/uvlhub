@@ -1,0 +1,19 @@
+{% extends 'base_template.html' %}
+
+{% block content %}
+  <h2>Two-Factor Authentication</h2>
+
+  <p>Enter the authentication code from your authenticator app.</p>
+
+  <form method="post">
+    {{ form.csrf_token }}
+    <div>
+      {{ form.token.label }}
+      {{ form.token(size=10) }}
+    </div>
+    <div>
+      {{ form.submit() }}
+    </div>
+  </form>
+
+{% endblock %}

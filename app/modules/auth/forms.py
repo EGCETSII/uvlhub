@@ -16,3 +16,7 @@ class LoginForm(FlaskForm):
     password = PasswordField("Password", validators=[DataRequired()])
     remember_me = BooleanField("Remember me")
     submit = SubmitField("Login")
+
+class TwoFactorForm(FlaskForm):
+    token = StringField("Authentication code", validators=[DataRequired(), Length(min=4, max=8)])
+    submit = SubmitField("Verify")

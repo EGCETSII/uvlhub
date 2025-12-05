@@ -1,6 +1,7 @@
 import logging
 import os
 import tempfile
+import csv
 
 from antlr4 import CommonTokenStream, FileStream
 from antlr4.error.ErrorListener import ErrorListener
@@ -68,6 +69,44 @@ def check_uvl(file_id):
 @flamapy_bp.route("/flamapy/valid/<int:file_id>", methods=["GET"])
 def valid(file_id):
     return jsonify({"success": True, "file_id": file_id})
+
+
+@flamapy_bp.route("/flamapy/check_csv/<int:file_id>", methods=["GET"])
+def check_csv(file_id):
+    """Check CSV syntax for a hubfile: parsing errors and inconsistent column counts.
+
+    Returns 200 with a success message if the CSV is valid, or 400 with a list of
+    errors when parsing fails or rows have inconsistent column counts.
+    """
+    try:
+        hubfile = HubfileService().get_by_id(file_id)
+        errors = []
+
+        with open(hubfile.get_path(), newline='') as csvfile:
+            reader = csv.reader(csvfile)
+            row_num = 0
+            expected_cols = None
+            for row in reader:
+                row_num += 1
+                # Set expected columns from the first row (header or first data row)
+                if expected_cols is None:
+                    expected_cols = len(row)
+                else:
+                    if len(row) != expected_cols:
+                        errors.append(
+                            f"Line {row_num}: expected {expected_cols} columns, found {len(row)}"
+                        )
+
+        if errors:
+            return jsonify({"errors": errors}), 400
+
+        return jsonify({"message": "Valid CSV"}), 200
+
+    except csv.Error as e:
+        # CSV parsing/library errors
+        return jsonify({"error": f"CSV parsing error: {str(e)}"}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @flamapy_bp.route("/flamapy/to_glencoe/<int:file_id>", methods=["GET"])

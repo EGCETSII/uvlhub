@@ -12,4 +12,9 @@ def index():
 @zenodo_bp.route("/zenodo/test", methods=["GET"])
 def zenodo_test() -> dict:
     service = ZenodoService()
-    return service.test_full_connection()
+    result = service.test_full_connection()
+    return {
+        "zenodo_url": service.ZENODO_API_URL,
+        "test_result": result.get_json() if hasattr(result, "get_json") else result
+    }
+

@@ -18,6 +18,11 @@ class AuthenticationService(BaseService):
     def login(self, email, password, remember=True):
         user = self.repository.get_by_email(email)
         if user is not None and user.check_password(password):
+            # If user has 2FA enabled, require verification step
+            if getattr(user, "two_factor_enabled", False):
+                # indicate that an OTP verification step is required
+                return "otp_required"
+
             login_user(user, remember=remember)
             return True
         return False

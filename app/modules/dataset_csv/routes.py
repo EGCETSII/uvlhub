@@ -4,6 +4,7 @@ import os
 import shutil
 import tempfile
 import uuid
+import csv
 from datetime import datetime, timezone
 from zipfile import ZipFile
 
@@ -19,10 +20,10 @@ from flask import (
 )
 from flask_login import current_user, login_required
 
-from app.modules.dataset import dataset_bp
-from app.modules.dataset.forms import DataSetForm
+from app.modules.dataset_csv import dataset_csv_bp
+from app.modules.dataset_csv.forms import DataSetForm
 from app.modules.dataset.models import DSDownloadRecord
-from app.modules.dataset.services import (
+from app.modules.dataset_csv.services import (
     AuthorService,
     DataSetService,
     DOIMappingService,
@@ -31,8 +32,6 @@ from app.modules.dataset.services import (
     DSViewRecordService,
 )
 from app.modules.zenodo.services import ZenodoService
-from app.modules.recommendations.service import get_recommended_datasets
-
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +44,7 @@ doi_mapping_service = DOIMappingService()
 ds_view_record_service = DSViewRecordService()
 
 
-@dataset_bp.route("/dataset/upload", methods=["GET", "POST"])
+@dataset_csv_bp.route("/csvdataset/upload", methods=["GET", "POST"])
 @login_required
 def create_dataset():
     form = DataSetForm()
@@ -108,7 +107,7 @@ def create_dataset():
     return render_template("dataset/upload_dataset.html", form=form)
 
 
-@dataset_bp.route("/dataset/list", methods=["GET", "POST"])
+@dataset_csv_bp.route("/csvdataset/list", methods=["GET", "POST"])
 @login_required
 def list_dataset():
     return render_template(
@@ -118,13 +117,13 @@ def list_dataset():
     )
 
 
-@dataset_bp.route("/dataset/file/upload", methods=["POST"])
+@dataset_csv_bp.route("/csvdataset/file/upload", methods=["POST"])
 @login_required
 def upload():
     file = request.files["file"]
     temp_folder = current_user.temp_folder()
 
-    if not file or not file.filename.endswith(".uvl"):
+    if not file or not file.filename.endswith(".csv"):
         return jsonify({"message": "No valid file"}), 400
 
     # create temp folder
@@ -149,10 +148,70 @@ def upload():
     except Exception as e:
         return jsonify({"message": str(e)}), 500
 
+    # Validate CSV header matches the expected schema (same structure as topselling_steam_games.csv)
+    expected_header = [
+        "ID",
+        "Title",
+        "Description",
+        "Launch Date",
+        "Developer",
+        "Publisher",
+        "Price",
+        "Discount %",
+        "Original Price",
+        "Discounted Price",
+        "Recent Reviews",
+        "Recent Positive %",
+        "Recent Review Summary",
+        "Total Reviews",
+        "Total Positive %",
+        "Total Review Summary",
+        "Rating Value",
+        "Best Rating",
+        "Worst Rating",
+        "Tags",
+        "URL",
+    ]
+
+    try:
+        with open(file_path, newline='', encoding='utf-8') as csvfile:
+            reader = csv.reader(csvfile)
+            try:
+                header = next(reader)
+            except StopIteration:
+                # empty file
+                os.remove(file_path)
+                return jsonify({"message": "CSV is empty or invalid"}), 400
+
+        # normalize possible BOM on first header cell
+        if header and header[0].startswith('\ufeff'):
+            header[0] = header[0].lstrip('\ufeff')
+
+        if header != expected_header:
+            # delete invalid file
+            if os.path.exists(file_path):
+                os.remove(file_path)
+            return (
+                jsonify(
+                    {
+                        "message": "CSV header does not match the expected topselling_steam_games schema",
+                        "expected_header": expected_header,
+                        "received_header": header,
+                    }
+                ),
+                400,
+            )
+    except Exception as e:
+        # if any problem validating, remove file and return 400
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        logger.exception(f"Exception validating CSV header: {e}")
+        return jsonify({"message": "Error validating CSV file"}), 400
+
     return (
         jsonify(
             {
-                "message": "UVL uploaded and validated successfully",
+                "message": "CSV uploaded and validated successfully",
                 "filename": new_filename,
             }
         ),
@@ -160,7 +219,7 @@ def upload():
     )
 
 
-@dataset_bp.route("/dataset/file/delete", methods=["POST"])
+@dataset_csv_bp.route("/csvdataset/file/delete", methods=["POST"])
 def delete():
     data = request.get_json()
     filename = data.get("file")
@@ -174,7 +233,7 @@ def delete():
     return jsonify({"error": "Error: File not found"})
 
 
-@dataset_bp.route("/dataset/download/<int:dataset_id>", methods=["GET"])
+@dataset_csv_bp.route("/csvdataset/download/<int:dataset_id>", methods=["GET"])
 def download_dataset(dataset_id):
     dataset = dataset_service.get_or_404(dataset_id)
 
@@ -235,37 +294,33 @@ def download_dataset(dataset_id):
     return resp
 
 
-@dataset_bp.route("/doi/<path:doi>/", methods=["GET"])
+@dataset_csv_bp.route("/doi/<path:doi>/", methods=["GET"])
 def subdomain_index(doi):
+
+    # Check if the DOI is an old DOI
     new_doi = doi_mapping_service.get_new_doi(doi)
     if new_doi:
-        return redirect(url_for("dataset.subdomain_index", doi=new_doi), code=302)
+        # Redirect to the same path with the new DOI
+        return redirect(url_for("dataset_csv.subdomain_index", doi=new_doi), code=302)
 
+    # Try to search the dataset by the provided DOI (which should already be the new one)
     ds_meta_data = dsmetadata_service.filter_by_doi(doi)
+
     if not ds_meta_data:
         abort(404)
 
+    # Get dataset
     dataset = ds_meta_data.data_set
 
-    # ✅ Obtener datasets recomendados
-    recommended_datasets = get_recommended_datasets(dataset)
-
-    # Guardar cookie de visualización
+    # Save the cookie to the user's browser
     user_cookie = ds_view_record_service.create_cookie(dataset=dataset)
-    resp = make_response(
-        render_template(
-            "dataset/view_dataset.html",
-            dataset=dataset,
-            recommended=recommended_datasets,  # 👈 Se pasa a la plantilla
-        )
-    )
+    resp = make_response(render_template("dataset/view_dataset.html", dataset=dataset))
     resp.set_cookie("view_cookie", user_cookie)
 
     return resp
 
 
-
-@dataset_bp.route("/dataset/unsynchronized/<int:dataset_id>/", methods=["GET"])
+@dataset_csv_bp.route("/csvdataset/unsynchronized/<int:dataset_id>/", methods=["GET"])
 @login_required
 def get_unsynchronized_dataset(dataset_id):
 

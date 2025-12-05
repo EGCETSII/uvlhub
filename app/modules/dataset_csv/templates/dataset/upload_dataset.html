@@ -1,10 +1,10 @@
 {% extends "base_template.html" %}
 
-{% block title %}Upload dataset{% endblock %}
+{% block title %}Upload CSV dataset{% endblock %}
 
 {% block content %}
 
-    <h1 class="h2 mb-3"><b>Upload</b> dataset</h1>
+    <h1 class="h2 mb-3"><b>Upload</b> dataset (CSV)</h1>
 
     <div class="row">
         <div class="col-12 mb-3">
@@ -101,11 +101,10 @@
                         <h1 class="h3 mb-3 mt-4">
                           Authors
                           <a href="#" data-toggle="modal" data-target="#infoModal">
-                            <i data-feather="info"></i> <!-- Usamos "info" porque Feather no tiene un ícono específico llamado "feather" para más info -->
+                            <i data-feather="info"></i>
                           </a>
                         </h1>
 
-                        <!-- Modal -->
                         <div class="modal fade" id="infoModal" tabindex="-1" role="dialog" aria-labelledby="infoModalLabel" aria-hidden="true" style="display: none">
                           <div class="modal-dialog" role="document">
                             <div class="modal-content">
@@ -214,11 +213,11 @@
 
         <div class="col-xl-6 col-lg-12 col-md-12 col-sm-12">
 
-            <h1 class="h3 mb-3 mt-2">GAMES models</h1>
+            <h1 class="h3 mb-3 mt-2">CSV models</h1>
 
             <div id="uploaded_models_form" style="padding-left: 2rem">
 
-                <form action="{{ url_for('dataset.upload') }}" class="dropzone" id="myDropzone">
+                <form action="{{ url_for('dataset_csv.upload') }}" class="dropzone" id="myDropzone">
                     <div id="dropzone-text"></div>
                 </form>
 
@@ -229,10 +228,10 @@
 
                 <script>
                     let dropzone = Dropzone.options.myDropzone = {
-                        url: "/dataset/file/upload",
+                        url: "/csvdataset/file/upload",
                         paramName: 'file',
                         maxFilesize: 10,
-                        acceptedFiles: '.uvl',
+                        acceptedFiles: '.csv',
                         init: function () {
 
                             let fileList = document.getElementById('file-list');
@@ -242,7 +241,7 @@
                             this.on('addedfile', function (file) {
 
                                 let ext = file.name.split('.').pop();
-                                if (ext !== 'uvl') {
+                                if (ext !== 'csv') {
                                     this.removeFile(file);
 
                                     let alert = document.createElement('p');
@@ -260,7 +259,7 @@
                                 show_upload_dataset();
 
                                 console.log("File uploaded: ", response);
-                                // actions when UVL model is uploaded
+                                // actions when CSV model is uploaded
                                 let listItem = document.createElement('li');
                                 let h4Element = document.createElement('h4');
                                 h4Element.textContent = response.filename;
@@ -316,7 +315,7 @@
 
                                     // Ajax request
                                     let xhr = new XMLHttpRequest();
-                                    xhr.open('POST', '/dataset/file/delete', true);
+                                    xhr.open('POST', '/csvdataset/file/delete', true);
                                     xhr.setRequestHeader('Content-Type', 'application/json');
                                     xhr.onload = function () {
                                         if (xhr.status === 200) {
@@ -342,11 +341,11 @@
 
                                 /*
                                     ##########################################
-                                    UVL FORM
+                                    CSV FORM
                                     ##########################################
                                 */
 
-                                // create specific form for UVL
+                                // create specific form for CSV
                                 let formContainer = document.createElement('div');
                                 formContainer.id = formUniqueId + "_form";
                                 formContainer.classList.add('uvl_form', "mt-3");
@@ -434,7 +433,7 @@
                             this.on('error', function (file, response) {
                                 console.error("Error uploading file: ", response);
                                 let alert = document.createElement('p');
-                                alert.textContent = 'GAME not valid: ' + file.name;
+                                alert.textContent = 'Game not valid: ' + file.name;
                                 alerts.appendChild(alert);
                                 alerts.style.display = 'block';
                             });
@@ -514,8 +513,9 @@
                     });
                 </script>
 
-            </div>
 
+
+            </div>
 
 
 
