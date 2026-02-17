@@ -237,3 +237,371 @@ var currentId = 0;
             let orcidRegex = /^\d{4}-\d{4}-\d{4}-\d{4}$/;
             return orcidRegex.test(orcid);
         }
+
+function showAlert(container, message, type) {
+    if (!container) return;
+
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.setAttribute('role', 'alert');
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+
+    container.innerHTML = '';
+    container.appendChild(alertDiv);
+}
+
+function displayImportedFiles(source, files) {
+    const fileList = document.getElementById('file-list');
+    if (!fileList) {
+        console.warn('file-list container not found');
+        return;
+    }
+
+    files.forEach(filename => {
+        const fileId = generateIncrementalId();
+
+        const listItem = document.createElement('li');
+        const h4Element = document.createElement('h4');
+        h4Element.textContent = filename;
+        listItem.appendChild(h4Element);
+
+        // Info button
+        const formButton = document.createElement('button');
+        formButton.innerHTML = 'Show info';
+        formButton.classList.add('info-button', 'btn', 'btn-outline-secondary', 'btn-sm');
+        formButton.style.borderRadius = '5px';
+        formButton.id = fileId + "_button";
+
+        // Form container 
+        const formContainer = document.createElement('div');
+        formContainer.id = fileId + "_form";
+        formContainer.classList.add('uvl_form', 'mt-3');
+        formContainer.style.display = "none";
+
+        formButton.addEventListener('click', function() {
+            if (formContainer.style.display === "none") {
+                formContainer.style.display = "block";
+                formButton.innerHTML = 'Hide info';
+            } else {
+                formContainer.style.display = "none";
+                formButton.innerHTML = 'Add info';
+            }
+        });
+
+        // Space
+        listItem.appendChild(document.createTextNode(" "));
+
+        // Remove button
+        const removeButton = document.createElement('button');
+        removeButton.innerHTML = 'Delete model';
+        removeButton.classList.add('remove-button', 'btn', 'btn-outline-danger', 'btn-sm');
+        removeButton.style.borderRadius = '5px';
+
+        removeButton.addEventListener('click', function() {
+            // Remove from DOM
+            fileList.removeChild(listItem);
+
+            // Delete from server
+            fetch('/dataset/file/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ file: filename })
+            });
+
+            // Hide upload button if no files left
+            if (fileList.children.length === 0) {
+                document.getElementById("upload_dataset").style.display = "none";
+                clean_upload_errors();
+            }
+        });
+
+        listItem.appendChild(document.createTextNode(" "));
+        listItem.appendChild(formButton);
+        listItem.appendChild(removeButton);
+
+        // UVL form 
+        formContainer.innerHTML = `
+            <div class="row">
+                <input type="hidden" value="${filename}" name="feature_models-${fileId}-uvl_filename">
+                <div class="col-12">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label class="form-label">Title</label>
+                                <input type="text" class="form-control" name="feature_models-${fileId}-title">
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label class="form-label">Description</label>
+                                <textarea rows="4" class="form-control" name="feature_models-${fileId}-desc"></textarea>
+                            </div>
+                        </div>
+                        <div class="col-lg-6 col-12">
+                            <div class="mb-3">
+                                <label class="form-label">Publication type</label>
+                                <select class="form-control" name="feature_models-${fileId}-publication_type">
+                                    <option value="none">None</option>
+                                    <option value="annotationcollection">Annotation Collection</option>
+                                    <option value="book">Book</option>
+                                    <option value="section">Book Section</option>
+                                    <option value="conferencepaper">Conference Paper</option>
+                                    <option value="datamanagementplan">Data Management Plan</option>
+                                    <option value="article">Journal Article</option>
+                                    <option value="patent">Patent</option>
+                                    <option value="preprint">Preprint</option>
+                                    <option value="deliverable">Project Deliverable</option>
+                                    <option value="milestone">Project Milestone</option>
+                                    <option value="proposal">Proposal</option>
+                                    <option value="report">Report</option>
+                                    <option value="softwaredocumentation">Software Documentation</option>
+                                    <option value="taxonomictreatment">Taxonomic Treatment</option>
+                                    <option value="technicalnote">Technical Note</option>
+                                    <option value="thesis">Thesis</option>
+                                    <option value="workingpaper">Working Paper</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-lg-6 col-6">
+                            <div class="mb-3">
+                                <label class="form-label">Publication DOI</label>
+                                <input class="form-control" name="feature_models-${fileId}-publication_doi" type="text">
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="mb-3">
+                                <label class="form-label">Tags (separated by commas)</label>
+                                <input type="text" class="form-control" name="feature_models-${fileId}-tags">
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="mb-3">
+                                <label class="form-label">UVL version</label>
+                                <input type="text" class="form-control" name="feature_models-${fileId}-uvl_version">
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label class="form-label">Authors</label>
+                                <div id="${formContainer.id}_authors"></div>
+                                <button type="button" class="add_author_to_uvl btn btn-secondary" id="${formContainer.id}_authors_button">Add author</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        listItem.appendChild(formContainer);
+        fileList.appendChild(listItem);
+    });
+
+    if (typeof feather !== 'undefined') {
+        feather.replace();
+    }
+
+    show_upload_dataset();
+}
+
+// ========================================
+// IMPORT FROM GITHUB
+// ========================================
+document.addEventListener('DOMContentLoaded', function() {
+    const githubBtn = document.getElementById('import_github_btn');
+
+    if (githubBtn) {
+        githubBtn.addEventListener('click', function() {
+            const githubUrlInput = document.getElementById('github_url');
+            const githubUrl = githubUrlInput ? githubUrlInput.value.trim() : '';
+
+            // Find or create alerts container
+            let alertsContainer = document.getElementById('github-alerts');
+            if (!alertsContainer) {
+                alertsContainer = document.createElement('div');
+                alertsContainer.id = 'github-alerts';
+                alertsContainer.className = 'mt-3';
+                const cardBody = githubBtn.closest('.card-body');
+                if (cardBody) {
+                    cardBody.insertBefore(alertsContainer, cardBody.firstChild);
+                }
+            }
+
+            // Basic validation
+            if (!githubUrl) {
+                showAlert(alertsContainer, 'Please enter a GitHub URL', 'danger');
+                return;
+            }
+
+            if (!githubUrl.includes('github.com')) {
+                showAlert(alertsContainer, 'Invalid GitHub URL', 'danger');
+                return;
+            }
+
+            // Disable button and show loading
+            const originalHTML = githubBtn.innerHTML;
+            githubBtn.disabled = true;
+            githubBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Importing...';
+
+            // Clear previous alerts
+            alertsContainer.innerHTML = '';
+
+            // Call the import endpoint
+            fetch('/dataset/import', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ github_url: githubUrl })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => Promise.reject(err));
+                }
+                return response.json();
+            })
+            .then(data => {
+                githubBtn.disabled = false;
+                githubBtn.innerHTML = originalHTML;
+
+                if (typeof feather !== 'undefined') {
+                    feather.replace();
+                }
+
+                if (data.files && data.files.length > 0) {
+                    showAlert(alertsContainer,
+                        `Successfully imported ${data.count} UVL file(s) from GitHub`,
+                        'success'
+                    );
+
+                    // Display imported files
+                    displayImportedFiles('github', data.files);
+
+                    // Clear the input
+                    if (githubUrlInput) {
+                        githubUrlInput.value = '';
+                    }
+
+                    // Show upload dataset button
+                    show_upload_dataset();
+                } else {
+                    showAlert(alertsContainer, data.message || 'No files imported', 'warning');
+                }
+            })
+            .catch(error => {
+                githubBtn.disabled = false;
+                githubBtn.innerHTML = originalHTML;
+
+                if (typeof feather !== 'undefined') {
+                    feather.replace();
+                }
+
+                const errorMsg = error.message || 'Failed to import from GitHub';
+                showAlert(alertsContainer, errorMsg, 'danger');
+            });
+        });
+    }
+});
+
+
+// ========================================
+// IMPORT FROM ZIP
+// ========================================
+document.addEventListener('DOMContentLoaded', function() {
+    const zipBtn = document.getElementById('import_zip_btn');
+
+    if (zipBtn) {
+        zipBtn.addEventListener('click', function() {
+            const zipFileInput = document.getElementById('zip_file');
+
+            // Find or create alerts container
+            let alertsContainer = document.getElementById('zip-alerts');
+            if (!alertsContainer) {
+                alertsContainer = document.createElement('div');
+                alertsContainer.id = 'zip-alerts';
+                alertsContainer.className = 'mt-3';
+                const cardBody = zipBtn.closest('.card-body');
+                if (cardBody) {
+                    cardBody.insertBefore(alertsContainer, cardBody.firstChild);
+                }
+            }
+
+            // Basic validation
+            if (!zipFileInput || !zipFileInput.files || zipFileInput.files.length === 0) {
+                showAlert(alertsContainer, 'Please select a ZIP file', 'danger');
+                return;
+            }
+
+            const file = zipFileInput.files[0];
+
+            if (!file.name.toLowerCase().endsWith('.zip')) {
+                showAlert(alertsContainer, 'Only ZIP files are allowed', 'danger');
+                return;
+            }
+
+            // Disable button and show loading
+            const originalHTML = zipBtn.innerHTML;
+            zipBtn.disabled = true;
+            zipBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Importing...';
+
+            // Clear previous alerts
+            alertsContainer.innerHTML = '';
+
+            // Prepare form data
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // Call the import endpoint
+            fetch('/dataset/import', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => Promise.reject(err));
+                }
+                return response.json();
+            })
+            .then(data => {
+                zipBtn.disabled = false;
+                zipBtn.innerHTML = originalHTML;
+
+                if (typeof feather !== 'undefined') {
+                    feather.replace();
+                }
+
+                if (data.files && data.files.length > 0) {
+                    showAlert(alertsContainer,
+                        `Successfully imported ${data.count} UVL file(s) from ZIP`,
+                        'success'
+                    );
+
+                    // Display imported files
+                    displayImportedFiles('zip', data.files);
+
+                    // Clear the file input
+                    zipFileInput.value = '';
+
+                    // Show upload dataset button
+                    show_upload_dataset();
+                } else {
+                    showAlert(alertsContainer, data.message || 'No files imported', 'warning');
+                }
+            })
+            .catch(error => {
+                zipBtn.disabled = false;
+                zipBtn.innerHTML = originalHTML;
+
+                if (typeof feather !== 'undefined') {
+                    feather.replace();
+                }
+
+                const errorMsg = error.message || 'Failed to import from ZIP';
+                showAlert(alertsContainer, errorMsg, 'danger');
+            });
+        });
+    }
+});
