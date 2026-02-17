@@ -2,12 +2,19 @@ import hashlib
 import logging
 import os
 import shutil
+import tempfile
 import uuid
+from pathlib import Path
 from typing import Optional
+from zipfile import ZipFile
 
 from flask import request
 
 from app.modules.auth.services import AuthenticationService
+from app.modules.dataset.fetchers.base import FetchError
+from app.modules.dataset.fetchers.github import GithubFetcher
+from app.modules.dataset.fetchers.registry import DataSourceManager
+from app.modules.dataset.fetchers.zip import ZipFetcher
 from app.modules.dataset.models import DataSet, DSMetaData, DSViewRecord
 from app.modules.dataset.repositories import (
     AuthorRepository,
@@ -48,6 +55,14 @@ class DataSetService(BaseService):
         self.hubfilerepository = HubfileRepository()
         self.dsviewrecord_repostory = DSViewRecordRepository()
         self.hubfileviewrecord_repository = HubfileViewRecordRepository()
+
+        # Initialize data source manager for GitHub/ZIP imports
+        self.datasource_manager = DataSourceManager(
+            providers=[
+                GithubFetcher(),
+                ZipFetcher(),
+            ]
+        )
 
     def move_feature_models(self, dataset: DataSet):
         current_user = AuthenticationService().get_authenticated_user()
@@ -139,6 +154,117 @@ class DataSetService(BaseService):
     def get_uvlhub_doi(self, dataset: DataSet) -> str:
         domain = os.getenv("DOMAIN", "localhost")
         return f"http://{domain}/doi/{dataset.ds_meta_data.dataset_doi}"
+
+    # ==================== IMPORT FROM GITHUB / ZIP ====================
+
+    def _save_zip_to_temp(self, file_storage, current_user) -> Path:
+        """
+        Validates and saves the uploaded ZIP file to user's temp folder.
+        Returns the path to the saved file.
+        """
+        if not file_storage or not file_storage.filename:
+            raise FetchError("No ZIP file provided")
+
+        filename = file_storage.filename
+        if not filename.lower().endswith(".zip"):
+            raise FetchError("Invalid file type. Only .zip allowed")
+
+        user_temp = Path(current_user.temp_folder())
+        user_temp.mkdir(parents=True, exist_ok=True)
+
+        base_name = Path(filename).name
+        target = user_temp / base_name
+
+        # Avoid overwriting existing files
+        i = 1
+        while target.exists():
+            stem = Path(base_name).stem
+            suffix = Path(base_name).suffix
+            target = user_temp / f"{stem} ({i}){suffix}"
+            i += 1
+
+        file_storage.save(str(target))
+        return target
+
+    def _collect_uvl_files_into_temp(self, source_root: Path, dest_dir: Path):
+        """
+        Copies all valid .uvl files from source_root to dest_dir.
+        Also extracts and processes any ZIP files found inside.
+        Returns list of copied file paths.
+        """
+        added = []
+
+        for path in Path(source_root).rglob("*"):
+            if not path.is_file():
+                continue
+
+            # Process nested ZIP files
+            if path.suffix.lower() == ".zip":
+                logger.info(f"Found nested ZIP file: {path.name}, extracting...")
+
+                try:
+                    with tempfile.TemporaryDirectory() as temp_extract_dir:
+                        temp_extract_path = Path(temp_extract_dir)
+
+                        with ZipFile(path, "r") as zip_ref:
+                            for zip_info in zip_ref.infolist():
+                                # Security: prevent path traversal attacks
+                                if zip_info.filename.startswith("/") or ".." in zip_info.filename:
+                                    logger.warning(f"Skipping dangerous path in ZIP: {zip_info.filename}")
+                                    continue
+                                zip_ref.extract(zip_info, temp_extract_path)
+
+                        # Recursively search for UVL files inside extracted ZIP
+                        zip_models = self._collect_uvl_files_into_temp(temp_extract_path, dest_dir)
+                        added.extend(zip_models)
+
+                        logger.info(f"Found {len(zip_models)} UVL files inside {path.name}")
+
+                except Exception as e:
+                    logger.warning(f"Could not process nested ZIP {path.name}: {e}")
+                continue
+
+            # Only process .uvl files (skip macOS metadata files starting with ._)
+            if path.suffix.lower() != ".uvl":
+                continue
+
+            if path.name.startswith("._"):
+                logger.debug(f"Skipping macOS metadata file: {path.name}")
+                continue
+
+            # Validate UVL file has content
+            if path.stat().st_size == 0:
+                logger.warning(f"Skipping empty file: {path.name}")
+                continue
+
+            # Copy to destination, avoiding name collisions
+            dest_path = dest_dir / path.name
+            counter = 1
+            while dest_path.exists():
+                stem = path.stem
+                dest_path = dest_dir / f"{stem}_{counter}.uvl"
+                counter += 1
+
+            shutil.copy2(path, dest_path)
+            added.append(dest_path)
+            logger.info(f"Imported UVL file: {path.name}")
+
+        return added
+
+    def fetch_models_from_github(self, github_url: str, dest_dir: Path, current_user):
+        """
+        Clones/downloads GitHub repository to user's temp folder and copies .uvl files to dest_dir.
+        """
+        base_path = self.datasource_manager.fetch_to_user_temp(github_url, current_user)
+        return self._collect_uvl_files_into_temp(base_path, dest_dir)
+
+    def fetch_models_from_zip_upload(self, file_storage, dest_dir: Path, current_user):
+        """
+        Saves uploaded ZIP, extracts it, and copies .uvl files to dest_dir.
+        """
+        zip_path = self._save_zip_to_temp(file_storage, current_user)
+        extracted_root = self.datasource_manager.fetch_to_user_temp(str(zip_path), current_user)
+        return self._collect_uvl_files_into_temp(extracted_root, dest_dir)
 
 
 class AuthorService(BaseService):

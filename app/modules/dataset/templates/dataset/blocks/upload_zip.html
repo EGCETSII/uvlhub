@@ -1,0 +1,39 @@
+<div class="card mb-4 border-warning">
+    <div class="card-header bg-warning text-dark">
+        <h5 class="mb-0">
+            <i data-feather="package"></i>
+            Import from ZIP
+        </h5>
+    </div>
+    <div class="card-body">
+        <p class="text-muted">
+            Upload a ZIP file containing UVL files.
+            Files can be in the root or nested in subdirectories.
+        </p>
+
+        <div id="zip-alerts"></div>
+
+        <div class="mb-3">
+            <label for="zip_file" class="form-label">ZIP File *</label>
+            <input type="file"
+                   class="form-control"
+                   id="zip_file"
+                   accept=".zip"
+                   required>
+            <div class="form-text">
+                Maximum file size: <strong>100 MB</strong>
+            </div>
+        </div>
+
+        <button type="button"
+                class="btn btn-warning"
+                id="import_zip_btn">
+            <i data-feather="upload"></i> Import from ZIP
+        </button>
+
+        <div id="zip-imported-files" class="mt-4" style="display: none;">
+            <h6>Imported Files:</h6>
+            <ul id="zip-file-list" class="list-unstyled"></ul>
+        </div>
+    </div>
+</div>

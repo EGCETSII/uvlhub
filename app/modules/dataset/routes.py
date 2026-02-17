@@ -22,6 +22,7 @@ from flask_login import current_user, login_required
 from app.modules.dataset import dataset_bp
 from app.modules.dataset.forms import DataSetForm
 from app.modules.dataset.models import DSDownloadRecord
+from app.modules.dataset.fetchers.base import FetchError
 from app.modules.dataset.services import (
     AuthorService,
     DataSetService,
@@ -30,6 +31,7 @@ from app.modules.dataset.services import (
     DSMetaDataService,
     DSViewRecordService,
 )
+from pathlib import Path
 from app.modules.zenodo.services import ZenodoService
 
 logger = logging.getLogger(__name__)
@@ -170,6 +172,68 @@ def delete():
         return jsonify({"message": "File deleted successfully"})
 
     return jsonify({"error": "Error: File not found"})
+
+
+# ==================== IMPORT FROM GITHUB / ZIP ====================
+
+
+@dataset_bp.route("/dataset/import", methods=["POST"])
+@login_required
+def import_dataset():
+    """
+    Import UVL models from:
+    - GitHub repository URL (github_url)
+    - Uploaded ZIP file (file)
+    Files are saved to the user's temp folder.
+    """
+    json_data = request.get_json(silent=True) or {}
+    form_data = request.form or {}
+
+    github_url = json_data.get("github_url") or form_data.get("github_url")
+    zip_file = request.files.get("file")
+
+    if github_url and zip_file:
+        return jsonify({"message": "Provide either 'github_url' or a ZIP file, not both"}), 400
+    if not github_url and not zip_file:
+        return jsonify({"message": "Provide 'github_url' or a ZIP file"}), 400
+
+    temp_folder = Path(current_user.temp_folder())
+    temp_folder.mkdir(parents=True, exist_ok=True)
+
+    try:
+        if github_url:
+            added = dataset_service.fetch_models_from_github(
+                github_url=github_url,
+                dest_dir=temp_folder,
+                current_user=current_user,
+            )
+        else:
+            added = dataset_service.fetch_models_from_zip_upload(
+                file_storage=zip_file,
+                dest_dir=temp_folder,
+                current_user=current_user,
+            )
+
+        if not added:
+            return jsonify({"message": "No .uvl files found"}), 400
+
+        return (
+            jsonify(
+                {
+                    "message": "UVL models imported successfully",
+                    "files": [p.name for p in added],
+                    "count": len(added),
+                }
+            ),
+            200,
+        )
+
+    except FetchError as fe:
+        logger.warning(f"FetchError importing models: {fe}")
+        return jsonify({"message": str(fe)}), 400
+    except Exception as exc:
+        logger.exception(f"Error importing models: {exc}")
+        return jsonify({"message": "Internal server error"}), 500
 
 
 @dataset_bp.route("/dataset/download/<int:dataset_id>", methods=["GET"])

@@ -48,6 +48,7 @@ Flask-SQLAlchemy==3.1.1
 Flask-WTF==1.2.2
 gevent==25.5.1
 geventhttpclient==2.3.4
+GitPython==3.1.43
 graphviz==0.21
 greenlet==3.2.3
 gunicorn==23.0.0
