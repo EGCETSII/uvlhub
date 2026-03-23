@@ -1,20 +1,21 @@
-import os
 import glob
-import inspect
 import importlib.util
-from locust import HttpUser
+import inspect
+import os
+
 from dotenv import load_dotenv
+from locust import HttpUser
 
 
 def load_locustfiles():
     load_dotenv()
-    working_dir = os.getenv('WORKING_DIR', '')
+    working_dir = os.getenv("WORKING_DIR", "")
     print(f"Working directory: {working_dir}")
 
-    module_dir = os.path.join(working_dir, 'app', 'modules')
+    module_dir = os.path.join(working_dir, "app", "modules")
     print(f"Module directory: {module_dir}")
 
-    locustfile_paths = glob.glob(os.path.join(module_dir, '*', 'tests', 'locustfile.py'))
+    locustfile_paths = glob.glob(os.path.join(module_dir, "*", "tests", "locustfile.py"))
     print(f"Found locustfiles: {locustfile_paths}")
 
     found_user_classes = []

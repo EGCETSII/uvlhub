@@ -1,6 +1,6 @@
-
 from sqlalchemy import func
-from app.modules.featuremodel.models import FMMetaData, FeatureModel
+
+from app.modules.featuremodel.models import FeatureModel, FMMetaData
 from core.repositories.BaseRepository import BaseRepository
 
 

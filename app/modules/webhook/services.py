@@ -1,10 +1,11 @@
-from app.modules.webhook.repositories import WebhookRepository
-from core.services.BaseService import BaseService
+import subprocess
+from datetime import datetime, timezone
 
 from flask import abort
-import subprocess
+
 import docker
-from datetime import datetime, timezone
+from app.modules.webhook.repositories import WebhookRepository
+from core.services.BaseService import BaseService
 
 client = docker.from_env()
 
@@ -15,18 +16,18 @@ class WebhookService(BaseService):
 
     def get_web_container(self):
         try:
-            return client.containers.get('web_app_container')
+            return client.containers.get("web_app_container")
         except docker.errors.NotFound:
             abort(404, description="Web container not found.")
 
     def get_volume_name(self, container):
         volume_name = next(
             (
-                mount.get('Name') or mount.get('Source')
-                for mount in container.attrs['Mounts']
-                if mount['Destination'] == '/app'
+                mount.get("Name") or mount.get("Source")
+                for mount in container.attrs["Mounts"]
+                if mount["Destination"] == "/app"
             ),
-            None
+            None,
         )
 
         if not volume_name:
@@ -36,21 +37,29 @@ class WebhookService(BaseService):
 
     def execute_host_command(self, volume_name, command):
         try:
-            subprocess.run([
-                'docker', 'run', '--rm',
-                '-v', f'{volume_name}:/app',
-                '-v', '/var/run/docker.sock:/var/run/docker.sock',
-                '-w', '/app',
-                *command
-            ], check=True)
+            subprocess.run(
+                [
+                    "docker",
+                    "run",
+                    "--rm",
+                    "-v",
+                    f"{volume_name}:/app",
+                    "-v",
+                    "/var/run/docker.sock:/var/run/docker.sock",
+                    "-w",
+                    "/app",
+                    *command,
+                ],
+                check=True,
+            )
         except subprocess.CalledProcessError as e:
             abort(500, description=f"Host command failed: {str(e)}")
 
-    def execute_container_command(self, container, command, workdir='/app'):
+    def execute_container_command(self, container, command, workdir="/app"):
         exit_code, output = container.exec_run(command, workdir=workdir)
         if exit_code != 0:
             abort(500, description=f"Container command failed: {output.decode('utf-8')}")
-        return output.decode('utf-8')
+        return output.decode("utf-8")
 
     def log_deployment(self, container):
         log_entry = f"Deployment successful at {datetime.now(timezone.utc).isoformat()}\n"

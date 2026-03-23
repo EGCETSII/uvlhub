@@ -1,13 +1,13 @@
 services:
   web:
     container_name: web_app_container
-    image: drorganvidez/uvlhub:dev
     env_file:
       - ../.env
     expose:
       - "5000"
     depends_on:
       - db
+      - selenium-hub
     build:
       context: ../
       dockerfile: docker/images/Dockerfile.dev
@@ -35,7 +35,7 @@ services:
 
   nginx:
     container_name: nginx_web_server_container
-    image: nginx:latest
+    image: nginx:1.29.1
     volumes:
       - ./nginx/nginx.dev.conf:/etc/nginx/nginx.conf
       - ./nginx/html:/usr/share/nginx/html
@@ -43,6 +43,42 @@ services:
       - "80:80"
     depends_on:
       - web
+    networks:
+      - uvlhub_network
+
+  selenium-hub:
+    container_name: selenium_hub_container
+    image: selenium/hub:latest
+    ports:
+      - "4442:4442"
+      - "4443:4443"
+      - "4444:4444"
+    networks:
+      - uvlhub_network
+
+  selenium-chrome:
+    container_name: selenium_chrome_container
+    image: selenium/node-chrome:latest
+    shm_size: 2gb
+    ports:
+      - "5900:5900"
+    env_file:
+      - ../.env.selenium
+    depends_on:
+      - selenium-hub
+    networks:
+      - uvlhub_network
+
+  selenium-firefox:
+    container_name: selenium_firefox_container
+    image: selenium/node-firefox:latest
+    shm_size: 2gb
+    ports:
+      - "5901:5900"
+    env_file:
+      - ../.env.selenium
+    depends_on:
+      - selenium-hub
     networks:
       - uvlhub_network
 

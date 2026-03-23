@@ -1,10 +1,11 @@
 from sqlalchemy import func
+
+from app import db
 from app.modules.auth.models import User
 from app.modules.dataset.models import DataSet
 from app.modules.featuremodel.models import FeatureModel
 from app.modules.hubfile.models import Hubfile, HubfileDownloadRecord, HubfileViewRecord
 from core.repositories.BaseRepository import BaseRepository
-from app import db
 
 
 class HubfileRepository(BaseRepository):

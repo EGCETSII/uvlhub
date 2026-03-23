@@ -2,7 +2,7 @@ from typing import Generic, List, NoReturn, Optional, TypeVar, Union
 
 import app
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class BaseRepository(Generic[T]):

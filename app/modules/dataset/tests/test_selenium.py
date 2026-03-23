@@ -6,7 +6,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 
 from core.environment.host import get_host_for_selenium_testing
-from core.selenium.common import initialize_driver, close_driver
+from core.selenium.common import close_driver, initialize_driver
 
 
 def wait_for_page_to_load(driver, timeout=4):
@@ -45,6 +45,7 @@ def test_upload_dataset():
 
         # Send the form
         password_field.send_keys(Keys.RETURN)
+        time.sleep(4)
         wait_for_page_to_load(driver)
 
         # Count initial datasets

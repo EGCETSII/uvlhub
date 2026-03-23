@@ -2,7 +2,7 @@ services:
 
   web:
     container_name: web_app_container
-    image: drorganvidez/uvlhub:latest
+    image: <your_dockerhub_name>/uvlhub:latest
     env_file:
       - ../.env
     ports:
@@ -22,7 +22,7 @@ services:
     container_name: mariadb_container
     env_file:
       - ../.env
-    image: mariadb:latest
+    image: mariadb:12.0.2
     command: --default-authentication-plugin=mysql_native_password
     restart: always
     ports:
@@ -32,7 +32,7 @@ services:
 
   nginx:
     container_name: nginx_web_server_container
-    image: nginx:latest
+    image: nginx:1.29.1
     volumes:
       - ./nginx/nginx.prod.ssl.conf:/etc/nginx/nginx.conf
       - ./nginx/html:/usr/share/nginx/html

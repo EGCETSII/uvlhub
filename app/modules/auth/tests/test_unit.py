@@ -1,8 +1,8 @@
 import pytest
 from flask import url_for
 
-from app.modules.auth.services import AuthenticationService
 from app.modules.auth.repositories import UserRepository
+from app.modules.auth.services import AuthenticationService
 from app.modules.profile.repositories import UserProfileRepository
 
 
@@ -76,12 +76,7 @@ def test_signup_user_successful(test_client):
 
 
 def test_service_create_with_profie_success(clean_database):
-    data = {
-        "name": "Test",
-        "surname": "Foo",
-        "email": "service_test@example.com",
-        "password": "test1234"
-    }
+    data = {"name": "Test", "surname": "Foo", "email": "service_test@example.com", "password": "test1234"}
 
     AuthenticationService().create_with_profile(**data)
 
@@ -90,12 +85,7 @@ def test_service_create_with_profie_success(clean_database):
 
 
 def test_service_create_with_profile_fail_no_email(clean_database):
-    data = {
-        "name": "Test",
-        "surname": "Foo",
-        "email": "",
-        "password": "1234"
-    }
+    data = {"name": "Test", "surname": "Foo", "email": "", "password": "1234"}
 
     with pytest.raises(ValueError, match="Email is required."):
         AuthenticationService().create_with_profile(**data)
@@ -105,12 +95,7 @@ def test_service_create_with_profile_fail_no_email(clean_database):
 
 
 def test_service_create_with_profile_fail_no_password(clean_database):
-    data = {
-        "name": "Test",
-        "surname": "Foo",
-        "email": "test@example.com",
-        "password": ""
-    }
+    data = {"name": "Test", "surname": "Foo", "email": "test@example.com", "password": ""}
 
     with pytest.raises(ValueError, match="Password is required."):
         AuthenticationService().create_with_profile(**data)

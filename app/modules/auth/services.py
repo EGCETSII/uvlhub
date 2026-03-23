@@ -1,6 +1,6 @@
 import os
-from flask_login import login_user
-from flask_login import current_user
+
+from flask_login import current_user, login_user
 
 from app.modules.auth.models import User
 from app.modules.auth.repositories import UserRepository
@@ -41,10 +41,7 @@ class AuthenticationService(BaseService):
             if not surname:
                 raise ValueError("Surname is required.")
 
-            user_data = {
-                "email": email,
-                "password": password
-            }
+            user_data = {"email": email, "password": password}
 
             profile_data = {
                 "name": name,

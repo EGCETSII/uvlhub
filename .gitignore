@@ -1,20 +1,56 @@
-.env
-__pycache__/
-.idea
-uploads/
-app.log
-.DS_Store
-rosemary.egg-info/
-build/
-.coverage
-htmlcov/
-.pytest_cache
+# ==========================
+# Environment & dependencies
+# ==========================
+.venv/
 venv/
 vagrant_venv/
-ubuntu-bionic-18.04-cloudimg-console.log
-.vagrant/
-nginx.prod.ssl.conf
-.version
-entrypoint.sh
+rosemary.egg-info/
+build/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# ==========================
+# IDE & editor files
+# ==========================
+.idea/
+.vscode/
+.DS_Store
+
+# ==========================
+# Logs & coverage
+# ==========================
+*.log
+app.log
 deployments.log
+.coverage
+htmlcov/
+.pytest_cache/
+coverage.xml
+
+# ==========================
+# Config & environment
+# ==========================
+.env
+.version
+nginx.prod.ssl.conf
+entrypoint.sh
+
+# ==========================
+# Temporary & test files
+# ==========================
+uploads/
 test_file.txt
+
+# ==========================
+# Vagrant
+# ==========================
+.vagrant/
+ubuntu-bionic-18.04-cloudimg-console.log
+
+# ==========================
+# Custom ignores
+# ==========================
+.moduleignore

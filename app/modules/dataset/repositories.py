@@ -1,18 +1,11 @@
-from datetime import datetime, timezone
 import logging
-from flask_login import current_user
+from datetime import datetime, timezone
 from typing import Optional
 
+from flask_login import current_user
 from sqlalchemy import desc, func
 
-from app.modules.dataset.models import (
-    Author,
-    DOIMapping,
-    DSDownloadRecord,
-    DSMetaData,
-    DSViewRecord,
-    DataSet
-)
+from app.modules.dataset.models import Author, DataSet, DOIMapping, DSDownloadRecord, DSMetaData, DSViewRecord
 from core.repositories.BaseRepository import BaseRepository
 
 logger = logging.getLogger(__name__)
@@ -52,16 +45,16 @@ class DSViewRecordRepository(BaseRepository):
         return self.model.query.filter_by(
             user_id=current_user.id if current_user.is_authenticated else None,
             dataset_id=dataset.id,
-            view_cookie=user_cookie
+            view_cookie=user_cookie,
         ).first()
 
     def create_new_record(self, dataset: DataSet, user_cookie: str) -> DSViewRecord:
         return self.create(
-                user_id=current_user.id if current_user.is_authenticated else None,
-                dataset_id=dataset.id,
-                view_date=datetime.now(timezone.utc),
-                view_cookie=user_cookie,
-            )
+            user_id=current_user.id if current_user.is_authenticated else None,
+            dataset_id=dataset.id,
+            view_date=datetime.now(timezone.utc),
+            view_cookie=user_cookie,
+        )
 
 
 class DataSetRepository(BaseRepository):
@@ -92,18 +85,10 @@ class DataSetRepository(BaseRepository):
         )
 
     def count_synchronized_datasets(self):
-        return (
-            self.model.query.join(DSMetaData)
-            .filter(DSMetaData.dataset_doi.isnot(None))
-            .count()
-        )
+        return self.model.query.join(DSMetaData).filter(DSMetaData.dataset_doi.isnot(None)).count()
 
     def count_unsynchronized_datasets(self):
-        return (
-            self.model.query.join(DSMetaData)
-            .filter(DSMetaData.dataset_doi.is_(None))
-            .count()
-        )
+        return self.model.query.join(DSMetaData).filter(DSMetaData.dataset_doi.is_(None)).count()
 
     def latest_synchronized(self):
         return (

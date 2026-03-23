@@ -1,27 +1,27 @@
+import hashlib
 import logging
 import os
-import hashlib
 import shutil
-from typing import Optional
 import uuid
+from typing import Optional
 
 from flask import request
 
 from app.modules.auth.services import AuthenticationService
-from app.modules.dataset.models import DSViewRecord, DataSet, DSMetaData
+from app.modules.dataset.models import DataSet, DSMetaData, DSViewRecord
 from app.modules.dataset.repositories import (
     AuthorRepository,
+    DataSetRepository,
     DOIMappingRepository,
     DSDownloadRecordRepository,
     DSMetaDataRepository,
     DSViewRecordRepository,
-    DataSetRepository
 )
-from app.modules.featuremodel.repositories import FMMetaDataRepository, FeatureModelRepository
+from app.modules.featuremodel.repositories import FeatureModelRepository, FMMetaDataRepository
 from app.modules.hubfile.repositories import (
     HubfileDownloadRecordRepository,
     HubfileRepository,
-    HubfileViewRecordRepository
+    HubfileViewRecordRepository,
 )
 from core.services.BaseService import BaseService
 
@@ -137,8 +137,8 @@ class DataSetService(BaseService):
         return self.dsmetadata_repository.update(id, **kwargs)
 
     def get_uvlhub_doi(self, dataset: DataSet) -> str:
-        domain = os.getenv('DOMAIN', 'localhost')
-        return f'http://{domain}/doi/{dataset.ds_meta_data.dataset_doi}'
+        domain = os.getenv("DOMAIN", "localhost")
+        return f"http://{domain}/doi/{dataset.ds_meta_data.dataset_doi}"
 
 
 class AuthorService(BaseService):
@@ -169,7 +169,7 @@ class DSViewRecordService(BaseService):
     def the_record_exists(self, dataset: DataSet, user_cookie: str):
         return self.repository.the_record_exists(dataset, user_cookie)
 
-    def create_new_record(self, dataset: DataSet,  user_cookie: str) -> DSViewRecord:
+    def create_new_record(self, dataset: DataSet, user_cookie: str) -> DSViewRecord:
         return self.repository.create_new_record(dataset, user_cookie)
 
     def create_cookie(self, dataset: DataSet) -> str:
@@ -198,17 +198,17 @@ class DOIMappingService(BaseService):
             return None
 
 
-class SizeService():
+class SizeService:
 
     def __init__(self):
         pass
 
     def get_human_readable_size(self, size: int) -> str:
         if size < 1024:
-            return f'{size} bytes'
-        elif size < 1024 ** 2:
-            return f'{round(size / 1024, 2)} KB'
-        elif size < 1024 ** 3:
-            return f'{round(size / (1024 ** 2), 2)} MB'
+            return f"{size} bytes"
+        elif size < 1024**2:
+            return f"{round(size / 1024, 2)} KB"
+        elif size < 1024**3:
+            return f"{round(size / (1024 ** 2), 2)} MB"
         else:
-            return f'{round(size / (1024 ** 3), 2)} GB'
+            return f"{round(size / (1024 ** 3), 2)} GB"

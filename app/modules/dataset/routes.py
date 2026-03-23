@@ -1,6 +1,6 @@
+import json
 import logging
 import os
-import json
 import shutil
 import tempfile
 import uuid
@@ -8,29 +8,27 @@ from datetime import datetime, timezone
 from zipfile import ZipFile
 
 from flask import (
+    abort,
+    jsonify,
+    make_response,
     redirect,
     render_template,
     request,
-    jsonify,
     send_from_directory,
-    make_response,
-    abort,
     url_for,
 )
-from flask_login import login_required, current_user
+from flask_login import current_user, login_required
 
-from app.modules.dataset.forms import DataSetForm
-from app.modules.dataset.models import (
-    DSDownloadRecord
-)
 from app.modules.dataset import dataset_bp
+from app.modules.dataset.forms import DataSetForm
+from app.modules.dataset.models import DSDownloadRecord
 from app.modules.dataset.services import (
     AuthorService,
+    DataSetService,
+    DOIMappingService,
     DSDownloadRecordService,
     DSMetaDataService,
     DSViewRecordService,
-    DataSetService,
-    DOIMappingService
 )
 from app.modules.zenodo.services import ZenodoService
 
@@ -137,9 +135,7 @@ def upload():
         # Generate unique filename (by recursion)
         base_name, extension = os.path.splitext(file.filename)
         i = 1
-        while os.path.exists(
-            os.path.join(temp_folder, f"{base_name} ({i}){extension}")
-        ):
+        while os.path.exists(os.path.join(temp_folder, f"{base_name} ({i}){extension}")):
             i += 1
         new_filename = f"{base_name} ({i}){extension}"
         file_path = os.path.join(temp_folder, new_filename)
@@ -194,16 +190,12 @@ def download_dataset(dataset_id):
 
                 zipf.write(
                     full_path,
-                    arcname=os.path.join(
-                        os.path.basename(zip_path[:-4]), relative_path
-                    ),
+                    arcname=os.path.join(os.path.basename(zip_path[:-4]), relative_path),
                 )
 
     user_cookie = request.cookies.get("download_cookie")
     if not user_cookie:
-        user_cookie = str(
-            uuid.uuid4()
-        )  # Generate a new unique identifier if it does not exist
+        user_cookie = str(uuid.uuid4())  # Generate a new unique identifier if it does not exist
         # Save the cookie to the user's browser
         resp = make_response(
             send_from_directory(
@@ -226,7 +218,7 @@ def download_dataset(dataset_id):
     existing_record = DSDownloadRecord.query.filter_by(
         user_id=current_user.id if current_user.is_authenticated else None,
         dataset_id=dataset_id,
-        download_cookie=user_cookie
+        download_cookie=user_cookie,
     ).first()
 
     if not existing_record:
@@ -248,7 +240,7 @@ def subdomain_index(doi):
     new_doi = doi_mapping_service.get_new_doi(doi)
     if new_doi:
         # Redirect to the same path with the new DOI
-        return redirect(url_for('dataset.subdomain_index', doi=new_doi), code=302)
+        return redirect(url_for("dataset.subdomain_index", doi=new_doi), code=302)
 
     # Try to search the dataset by the provided DOI (which should already be the new one)
     ds_meta_data = dsmetadata_service.filter_by_doi(doi)

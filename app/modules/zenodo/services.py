@@ -1,17 +1,15 @@
 import logging
 import os
+
 import requests
+from dotenv import load_dotenv
+from flask import Response, jsonify
+from flask_login import current_user
 
 from app.modules.dataset.models import DataSet
 from app.modules.featuremodel.models import FeatureModel
 from app.modules.zenodo.repositories import ZenodoRepository
-
 from core.configuration.configuration import uploads_folder_name
-from dotenv import load_dotenv
-from flask import jsonify, Response
-from flask_login import current_user
-
-
 from core.services.BaseService import BaseService
 
 logger = logging.getLogger(__name__)
@@ -67,7 +65,7 @@ class ZenodoService(BaseService):
         success = True
 
         # Create a test file
-        working_dir = os.getenv('WORKING_DIR', "")
+        working_dir = os.getenv("WORKING_DIR", "")
         file_path = os.path.join(working_dir, "test_file.txt")
         with open(file_path, "w") as f:
             f.write("This is a test file with some content.")

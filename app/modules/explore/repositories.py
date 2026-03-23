@@ -1,8 +1,10 @@
 import re
-from sqlalchemy import any_, or_
+
 import unidecode
-from app.modules.dataset.models import Author, DSMetaData, DataSet, PublicationType
-from app.modules.featuremodel.models import FMMetaData, FeatureModel
+from sqlalchemy import any_, or_
+
+from app.modules.dataset.models import Author, DataSet, DSMetaData, PublicationType
+from app.modules.featuremodel.models import FeatureModel, FMMetaData
 from core.repositories.BaseRepository import BaseRepository
 
 
@@ -30,8 +32,7 @@ class ExploreRepository(BaseRepository):
             filters.append(DSMetaData.tags.ilike(f"%{word}%"))
 
         datasets = (
-            self.model.query
-            .join(DataSet.ds_meta_data)
+            self.model.query.join(DataSet.ds_meta_data)
             .join(DSMetaData.authors)
             .join(DataSet.feature_models)
             .join(FeatureModel.fm_meta_data)
