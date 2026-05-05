@@ -12,7 +12,6 @@ def linter():
     directories = [
         os.path.join(working_dir, "app"),
         os.path.join(working_dir, "rosemary"),
-        os.path.join(working_dir, "core"),
     ]
 
     # Run flake8 in each directory
@@ -29,7 +28,7 @@ def linter():
 
 @click.command(
     "linter:fix",
-    help="Automatically formats and cleans code in 'app', 'rosemary', and 'core' directories.",
+    help="Automatically formats and cleans code in 'app' and 'rosemary' directories.",
 )
 def linter_fix():
     import os
@@ -41,7 +40,6 @@ def linter_fix():
     directories = [
         os.path.join(working_dir, "app"),
         os.path.join(working_dir, "rosemary"),
-        os.path.join(working_dir, "core"),
     ]
 
     for directory in directories:

@@ -9,27 +9,27 @@ import docker
 
 
 @click.command("locust", help="Launches Locust for load testing based on the environment.")
-@click.argument("module", required=False)
-def locust(module):
+@click.argument("feature", required=False)
+def locust(feature):
 
     # Absolute paths
     working_dir = os.getenv("WORKING_DIR", "")
     docker_dir = os.path.join(working_dir, "docker/")
-    modules_dir = os.path.join(working_dir, "app/features")
+    features_dir = os.path.join(working_dir, "app/features")
 
-    def validate_module(module):
-        """Check if the module exists."""
-        if module:
-            module_path = os.path.join(modules_dir, module)
-            if not os.path.exists(module_path):
-                raise click.UsageError(f"module '{module}' does not exist.")
-            locustfile_path = os.path.join(module_path, "tests", "locustfile.py")
+    def validate_feature(feature):
+        """Check if the feature exists."""
+        if feature:
+            feature_path = os.path.join(features_dir, feature)
+            if not os.path.exists(feature_path):
+                raise click.UsageError(f"feature '{feature}' does not exist.")
+            locustfile_path = os.path.join(feature_path, "tests", "locustfile.py")
             if not os.path.exists(locustfile_path):
                 raise click.UsageError(
-                    f"Locustfile for module '{module}' does not exist at path " f"'{locustfile_path}'."
+                    f"Locustfile for feature '{feature}' does not exist at path " f"'{locustfile_path}'."
                 )
 
-    def run_docker_locust(volume_name, module):
+    def run_docker_locust(volume_name, feature):
         """Build and run the Locust container with the specified volume."""
 
         try:
@@ -72,8 +72,8 @@ def locust(module):
             "docker_uvlhub_network",
             "locust-image",
         ]
-        if module:
-            up_command.extend(["-f", f"{modules_dir}/{module}/tests/locustfile.py"])
+        if feature:
+            up_command.extend(["-f", f"{features_dir}/{feature}/tests/locustfile.py"])
 
         click.echo(f"Docker Run command: {' '.join(up_command)}")
         subprocess.run(up_command, check=True)
@@ -86,14 +86,14 @@ def locust(module):
                 return True
         return False
 
-    def run_in_console(module):
+    def run_in_console(feature):
 
         if is_locust_running():
             click.echo("Locust is already running.")
             return
 
-        if module:
-            locustfile_path = os.path.join(modules_dir, module, "tests", "locustfile.py")
+        if feature:
+            locustfile_path = os.path.join(features_dir, feature, "tests", "locustfile.py")
         else:
             from splent_framework.bootstraps import locustfile_bootstrap
             locustfile_path = locustfile_bootstrap.__file__
@@ -107,21 +107,21 @@ def locust(module):
         )
         click.echo(click.style("Locust is running at http://localhost:8089", fg="green"))
 
-    def run_local_locust(module):
+    def run_local_locust(feature):
         """Run Locust in the local environment."""
         click.echo("Starting Locust in local environment on port 8089...")
-        run_in_console(module)
+        run_in_console(feature)
 
-    def run_vagrant_locust(module):
+    def run_vagrant_locust(feature):
         """Run Locust in the Vagrant environment."""
         click.echo("Starting Locust in Vagrant environment on port 8089...")
-        run_in_console(module)
+        run_in_console(feature)
 
-    # Validate module if provided
-    if module:
-        validate_module(module)
+    # Validate feature if provided
+    if feature:
+        validate_feature(feature)
 
-    if working_dir == "/app/":
+    if working_dir == "/workspace/":
         client = docker.from_env()
 
         try:
@@ -130,7 +130,7 @@ def locust(module):
                 (
                     mount.get("Name") or mount.get("Source")
                     for mount in web_container.attrs["Mounts"]
-                    if mount["Destination"] == "/app"
+                    if mount["Destination"] == "/workspace"
                 ),
                 None,
             )
@@ -138,7 +138,7 @@ def locust(module):
             if not volume_name:
                 raise ValueError("No volume or bind mount found mounted on /app")
 
-            run_docker_locust(volume_name, module)
+            run_docker_locust(volume_name, feature)
 
         except docker.errors.NotFound:
             click.echo(click.style("Web container not found.", fg="red"))
@@ -146,10 +146,10 @@ def locust(module):
             click.echo(click.style(f"An error occurred: {str(e)}", fg="red"))
 
     elif working_dir == "":
-        run_local_locust(module)
+        run_local_locust(feature)
 
     elif working_dir == "/vagrant/":
-        run_vagrant_locust(module)
+        run_vagrant_locust(feature)
 
     else:
         click.echo(click.style(f"Unrecognized WORKING_DIR: {working_dir}", fg="red"))
@@ -178,7 +178,7 @@ def stop():
         # Remove the Locust container
         subprocess.run(rm_command)
 
-    if working_dir == "/app/":
+    if working_dir == "/workspace/":
         stop_docker_locust()
 
     elif working_dir == "" or working_dir == "/vagrant/":

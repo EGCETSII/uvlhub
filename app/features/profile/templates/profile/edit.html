@@ -11,7 +11,7 @@
         {% for category, message in messages %}
           <div class="row">
             <div class="col-12 mb-3">
-              <!-- Aquí se elige la clase en función de la categoría del mensaje -->
+              <!-- Pick the alert class based on the message category -->
               <div class="alert alert-{{ category }}" role="alert">
                 <div class="alert-message">
                   {% if category == 'success' %}
