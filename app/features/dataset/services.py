@@ -136,6 +136,50 @@ class DataSetService(BaseService):
     def update_dsmetadata(self, id, **kwargs):
         return self.dsmetadata_repository.update(id, **kwargs)
 
+    def save_temp_uvl(self, file, current_user) -> dict:
+        """Persist an uploaded UVL file under the current user's temp folder.
+
+        Disambiguates collisions by appending ``" (n)"`` until the name is
+        free. Returns a result dict the route turns into JSON.
+        """
+        if not file or not file.filename.endswith(".uvl"):
+            return {"status": "error", "code": 400, "message": "No valid file"}
+
+        temp_folder = current_user.temp_folder()
+        os.makedirs(temp_folder, exist_ok=True)
+
+        filename = file.filename
+        target = os.path.join(temp_folder, filename)
+        if os.path.exists(target):
+            base, ext = os.path.splitext(filename)
+            i = 1
+            while os.path.exists(os.path.join(temp_folder, f"{base} ({i}){ext}")):
+                i += 1
+            filename = f"{base} ({i}){ext}"
+            target = os.path.join(temp_folder, filename)
+
+        try:
+            file.save(target)
+        except Exception as exc:
+            return {"status": "error", "code": 500, "message": str(exc)}
+
+        return {
+            "status": "ok",
+            "code": 200,
+            "message": "UVL uploaded and validated successfully",
+            "filename": filename,
+        }
+
+    def delete_temp_file(self, filename: str, current_user) -> dict:
+        """Remove a previously-uploaded UVL from the user's temp folder."""
+        if not filename:
+            return {"status": "error", "code": 400, "error": "Error: filename missing"}
+        target = os.path.join(current_user.temp_folder(), filename)
+        if not os.path.exists(target):
+            return {"status": "error", "code": 404, "error": "Error: File not found"}
+        os.remove(target)
+        return {"status": "ok", "code": 200, "message": "File deleted successfully"}
+
     def upload_dataset(self, form, current_user) -> dict:
         """End-to-end dataset upload: persist locally, push to Zenodo, clean up.
 
@@ -185,6 +229,31 @@ class DataSetService(BaseService):
 
         return {"status": "ok", "code": 200, "message": "Everything works!"}
 
+    def build_download_archive(self, dataset: DataSet) -> tuple[str, str]:
+        """Zip the dataset's uploaded files and return ``(zip_path, filename)``.
+
+        ``zip_path`` lives under a fresh tempdir; the caller is responsible for
+        sending it (usually via ``send_from_directory``) — Linux keeps the
+        inode alive until the response stream drains, so the tempdir can be
+        left to OS cleanup.
+        """
+        import tempfile
+        from zipfile import ZipFile
+
+        source_dir = f"uploads/user_{dataset.user_id}/dataset_{dataset.id}/"
+        tmp_dir = tempfile.mkdtemp()
+        zip_name = f"dataset_{dataset.id}.zip"
+        zip_path = os.path.join(tmp_dir, zip_name)
+
+        with ZipFile(zip_path, "w") as zipf:
+            for subdir, _dirs, files in os.walk(source_dir):
+                for filename in files:
+                    full_path = os.path.join(subdir, filename)
+                    relative_path = os.path.relpath(full_path, source_dir)
+                    zipf.write(full_path, arcname=os.path.join(zip_name[:-4], relative_path))
+
+        return tmp_dir, zip_name
+
     def get_uvlhub_doi(self, dataset: DataSet) -> str:
         domain = os.getenv("DOMAIN", "localhost")
         return f"http://{domain}/doi/{dataset.ds_meta_data.dataset_doi}"
@@ -198,6 +267,25 @@ class AuthorService(BaseService):
 class DSDownloadRecordService(BaseService):
     def __init__(self):
         super().__init__(DSDownloadRecordRepository())
+
+    def record_download(self, user, dataset_id: int, cookie: str) -> None:
+        """Record a download once per (user/anonymous, dataset, cookie) tuple."""
+        from datetime import datetime, timezone
+
+        from app.features.dataset.models import DSDownloadRecord
+
+        user_id = user.id if user.is_authenticated else None
+        already = DSDownloadRecord.query.filter_by(
+            user_id=user_id, dataset_id=dataset_id, download_cookie=cookie
+        ).first()
+        if already:
+            return
+        self.create(
+            user_id=user_id,
+            dataset_id=dataset_id,
+            download_date=datetime.now(timezone.utc),
+            download_cookie=cookie,
+        )
 
 
 class DSMetaDataService(BaseService):
