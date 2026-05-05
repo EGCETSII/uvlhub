@@ -1,5 +1,7 @@
-from flask import flash, redirect, render_template, request, url_for
+from flask import redirect, render_template, request, url_for
 from flask_login import current_user, login_required
+
+from splent_framework.utils.form_helpers import form_error, form_success
 
 from app.features.auth.services import AuthenticationService
 from app.features.profile import profile_bp
@@ -21,9 +23,8 @@ def edit_profile():
     if request.method == "POST":
         result, errors = user_profile_service.update_profile(profile.id, form)
         if errors:
-            return render_template("profile/edit.html", form=form, errors=errors)
-        flash("Profile updated successfully", "success")
-        return redirect(url_for("profile.edit_profile"))
+            return form_error("profile/edit.html", form, errors)
+        return form_success("profile.edit_profile", "Profile updated successfully")
 
     return render_template("profile/edit.html", form=form)
 
