@@ -22,11 +22,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
-      # Step 2: Set up Python environment (3.12)
+      # Step 2: Set up Python environment (3.13 — splent_framework requires it)
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: '3.12'
+          python-version: '3.13'
 
       # Step 3: Install linting and formatting tools
       - name: Install Dependencies
@@ -36,12 +36,12 @@ jobs:
 
       # Step 4: Run flake8 for PEP8 linting
       - name: Lint with flake8
-        run: flake8 app rosemary core
+        run: flake8 app rosemary
 
       # Step 5: Verify code formatting with Black
       - name: Check formatting with black
-        run: black --check app rosemary core
+        run: black --check app rosemary
 
       # Step 6: Verify import ordering with isort
       - name: Check import order with isort
-        run: isort --check-only app rosemary core
+        run: isort --check-only app rosemary
