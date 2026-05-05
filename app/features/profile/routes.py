@@ -1,4 +1,4 @@
-from flask import redirect, render_template, request, url_for
+from flask import flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from app.features.auth.services import AuthenticationService
@@ -20,9 +20,10 @@ def edit_profile():
     form = UserProfileForm()
     if request.method == "POST":
         result, errors = user_profile_service.update_profile(profile.id, form)
-        return user_profile_service.handle_service_response(
-            result, errors, "profile.edit_profile", "Profile updated successfully", "profile/edit.html", form
-        )
+        if errors:
+            return render_template("profile/edit.html", form=form, errors=errors)
+        flash("Profile updated successfully", "success")
+        return redirect(url_for("profile.edit_profile"))
 
     return render_template("profile/edit.html", form=form)
 
