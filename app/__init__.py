@@ -1,41 +1,45 @@
+import importlib
 import os
+import pkgutil
 
 from dotenv import load_dotenv
 from flask import Flask
+from flask_login import LoginManager
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 
-from core.configuration.configuration import get_app_version
-from core.managers.config_manager import ConfigManager
-from core.managers.error_handler_manager import ErrorHandlerManager
-from core.managers.logging_manager import LoggingManager
-from core.managers.module_manager import ModuleManager
+from splent_framework.configuration.configuration import get_app_version
+from splent_framework.managers.config_manager import ConfigManager
+from splent_framework.managers.error_handler_manager import ErrorHandlerManager
+from splent_framework.managers.logging_manager import LoggingManager
 
-# Load environment variables
 load_dotenv()
 
-# Create the instances
 db = SQLAlchemy()
 migrate = Migrate()
 
 
-def create_app(config_name="development"):
+def _register_features(app: Flask) -> None:
+    import app.features as features_pkg
+
+    for _, name, ispkg in pkgutil.iter_modules(features_pkg.__path__):
+        if not ispkg:
+            continue
+        module = importlib.import_module(f"app.features.{name}")
+        bp = getattr(module, f"{name}_bp", None)
+        if bp is not None:
+            app.register_blueprint(bp)
+
+
+def create_app(config_name: str = "development") -> Flask:
     app = Flask(__name__)
 
-    # Load configuration according to environment
-    config_manager = ConfigManager(app)
-    config_manager.load_config(config_name=config_name)
+    ConfigManager(app).load_config(config_name=config_name)
 
-    # Initialize SQLAlchemy and Migrate with the app
     db.init_app(app)
     migrate.init_app(app, db)
 
-    # Register modules
-    module_manager = ModuleManager(app)
-    module_manager.register_modules()
-
-    # Register login manager
-    from flask_login import LoginManager
+    _register_features(app)
 
     login_manager = LoginManager()
     login_manager.init_app(app)
@@ -47,15 +51,9 @@ def create_app(config_name="development"):
 
         return User.query.get(int(user_id))
 
-    # Set up logging
-    logging_manager = LoggingManager(app)
-    logging_manager.setup_logging()
+    LoggingManager(app).setup_logging()
+    ErrorHandlerManager(app).register_error_handlers()
 
-    # Initialize error handler manager
-    error_handler_manager = ErrorHandlerManager(app)
-    error_handler_manager.register_error_handlers()
-
-    # Injecting environment variables into jinja context
     @app.context_processor
     def inject_vars_into_jinja():
         return {
