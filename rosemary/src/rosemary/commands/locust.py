@@ -14,7 +14,6 @@ def locust(module):
 
     # Absolute paths
     working_dir = os.getenv("WORKING_DIR", "")
-    core_dir = os.path.join(working_dir, "core")
     docker_dir = os.path.join(working_dir, "docker/")
     modules_dir = os.path.join(working_dir, "app/features")
 
@@ -56,12 +55,9 @@ def locust(module):
         click.echo(f"Build command: {' '.join(build_command)}")
         subprocess.run(build_command, check=True)
 
-        # Define the locustfile path
-        locustfile_path = os.path.join(core_dir, "bootstraps/locustfile_bootstrap.py")
-        if module:
-            locustfile_path = f"{modules_dir}/{module}/tests/locustfile.py"
-
-        # Run the Locust container
+        # Run the Locust container. When a feature is supplied, point locust at
+        # its locustfile; otherwise let the container's entrypoint resolve the
+        # default bootstrap from splent_framework's site-packages.
         up_command = [
             "docker",
             "run",
@@ -75,9 +71,9 @@ def locust(module):
             "--network",
             "docker_uvlhub_network",
             "locust-image",
-            "-f",
-            locustfile_path,
         ]
+        if module:
+            up_command.extend(["-f", f"{modules_dir}/{module}/tests/locustfile.py"])
 
         click.echo(f"Docker Run command: {' '.join(up_command)}")
         subprocess.run(up_command, check=True)
@@ -96,9 +92,11 @@ def locust(module):
             click.echo("Locust is already running.")
             return
 
-        locustfile_path = os.path.join(core_dir, "bootstraps/locustfile_bootstrap.py")
         if module:
             locustfile_path = os.path.join(modules_dir, module, "tests", "locustfile.py")
+        else:
+            from splent_framework.bootstraps import locustfile_bootstrap
+            locustfile_path = locustfile_bootstrap.__file__
         locust_command = ["locust", "-f", locustfile_path]
         click.echo(f"Locust command: {' '.join(locust_command)}")
         subprocess.Popen(

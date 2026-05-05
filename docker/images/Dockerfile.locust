@@ -1,9 +1,11 @@
-FROM locustio/locust
+FROM python:3.13-slim
 
 WORKDIR /app
 
-RUN pip install python-dotenv faker bs4
+RUN pip install --no-cache-dir locust python-dotenv faker bs4 splent_framework==1.6.1
 
 ENV PYTHONPATH=/app
 
-CMD ["-f", "/app/core/bootstraps/locustfile_bootstrap.py"]
+COPY --chmod=0755 docker/entrypoints/locust_entrypoint.sh /app/locust_entrypoint.sh
+
+ENTRYPOINT ["/app/locust_entrypoint.sh"]
