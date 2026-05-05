@@ -1,0 +1,16 @@
+from splent_framework.environment.host import get_host_for_selenium_testing
+from splent_framework.selenium.common import close_driver, initialize_driver
+
+
+def test_{{ feature_name }}_index():
+    driver = initialize_driver()
+    try:
+        host = get_host_for_selenium_testing()
+        driver.get(f"{host}/{{ feature_name }}")
+        # TODO: assertions for the {{ feature_name }} feature
+    finally:
+        close_driver(driver)
+
+
+if __name__ == "__main__":
+    test_{{ feature_name }}_index()

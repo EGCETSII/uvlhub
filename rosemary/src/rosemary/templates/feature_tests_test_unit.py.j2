@@ -1,0 +1,6 @@
+from splent_framework.fixtures.fixtures import test_client  # noqa: F401
+
+
+def test_{{ feature_name }}_index(test_client):
+    response = test_client.get("/{{ feature_name }}")
+    assert response.status_code == 200, "/{{ feature_name }} did not return 200"
