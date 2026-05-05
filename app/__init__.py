@@ -1,6 +1,4 @@
-import importlib
 import os
-import pkgutil
 
 from dotenv import load_dotenv
 from flask import Flask
@@ -13,34 +11,31 @@ from splent_framework.managers.config_manager import ConfigManager
 from splent_framework.managers.error_handler_manager import ErrorHandlerManager
 from splent_framework.managers.logging_manager import LoggingManager
 
+from app.feature_loader import register_features
+
 load_dotenv()
 
 db = SQLAlchemy()
 migrate = Migrate()
 
 
-def _register_features(app: Flask) -> None:
-    import app.features as features_pkg
-
-    for _, name, ispkg in pkgutil.iter_modules(features_pkg.__path__):
-        if not ispkg:
-            continue
-        module = importlib.import_module(f"app.features.{name}")
-        bp = getattr(module, f"{name}_bp", None)
-        if bp is not None:
-            app.register_blueprint(bp)
-
-
 def create_app(config_name: str = "development") -> Flask:
     app = Flask(__name__)
 
     ConfigManager(app).load_config(config_name=config_name)
-
     db.init_app(app)
     migrate.init_app(app, db)
 
-    _register_features(app)
+    register_features(app)
+    _setup_login(app)
+    LoggingManager(app).setup_logging()
+    ErrorHandlerManager(app).register_error_handlers()
+    _setup_jinja_globals(app)
 
+    return app
+
+
+def _setup_login(app: Flask) -> None:
     login_manager = LoginManager()
     login_manager.init_app(app)
     login_manager.login_view = "auth.login"
@@ -51,9 +46,8 @@ def create_app(config_name: str = "development") -> Flask:
 
         return User.query.get(int(user_id))
 
-    LoggingManager(app).setup_logging()
-    ErrorHandlerManager(app).register_error_handlers()
 
+def _setup_jinja_globals(app: Flask) -> None:
     @app.context_processor
     def inject_vars_into_jinja():
         return {
@@ -62,8 +56,6 @@ def create_app(config_name: str = "development") -> Flask:
             "DOMAIN": os.getenv("DOMAIN", "localhost"),
             "APP_VERSION": get_app_version(),
         }
-
-    return app
 
 
 app = create_app()
