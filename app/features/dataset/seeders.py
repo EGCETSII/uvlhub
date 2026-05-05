@@ -102,7 +102,7 @@ class DataSetSeeder(BaseSeeder):
         # Create files, associate them with FeatureModels and copy files
         load_dotenv()
         working_dir = os.getenv("WORKING_DIR", "")
-        src_folder = os.path.join(working_dir, "app", "modules", "dataset", "uvl_examples")
+        src_folder = os.path.join(working_dir, "app", "features", "dataset", "uvl_examples")
         for i in range(12):
             file_name = f"file{i+1}.uvl"
             feature_model = seeded_feature_models[i]
