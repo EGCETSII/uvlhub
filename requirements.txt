@@ -22,7 +22,7 @@ click==8.2.1
 ConfigArgParse==1.7.1
 coverage==7.10.1
 cryptography==45.0.5
-dd==0.5.7
+dd==0.6.0
 dnspython==2.7.0
 docker==7.1.0
 elastic-transport==8.17.1
