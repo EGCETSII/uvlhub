@@ -1,11 +1,11 @@
 FROM python:3.13-slim
 
-WORKDIR /app
+WORKDIR /workspace
 
 RUN pip install --no-cache-dir locust python-dotenv faker bs4 splent_framework==1.6.1
 
-ENV PYTHONPATH=/app
+ENV PYTHONPATH=/workspace
 
-COPY --chmod=0755 docker/entrypoints/locust_entrypoint.sh /app/locust_entrypoint.sh
+COPY --chmod=0755 docker/entrypoints/locust_entrypoint.sh /workspace/locust_entrypoint.sh
 
-ENTRYPOINT ["/app/locust_entrypoint.sh"]
+ENTRYPOINT ["/workspace/locust_entrypoint.sh"]

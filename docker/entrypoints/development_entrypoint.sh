@@ -17,7 +17,7 @@ set -e
 
 # Re-install Rosemary in editable mode against the volume-mounted source.
 # The Dockerfile already runs this at build time, but the dev compose binds
-# ./uvlhub:/app on top, so we redo it from inside the bind mount.
+# ./uvlhub:/workspace on top, so we redo it from inside the bind mount.
 pip install -e ./rosemary
 
 # Wait for the database to be ready by running a script

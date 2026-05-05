@@ -25,10 +25,10 @@ RUN apt-get install -y --no-install-recommends ca-certificates gnupg lsb-release
 RUN apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Set the working directory in the container to /app
-WORKDIR /app
+# Set the working directory in the container to /workspace
+WORKDIR /workspace
 
-# Copy requirements.txt into the working directory /app
+# Copy requirements.txt into the working directory /workspace
 COPY requirements.txt .
 
 # Copy the wait-for-db.sh script and set execution permissions
@@ -47,7 +47,7 @@ RUN pip install --no-cache-dir --upgrade pip
 RUN pip install -r requirements.txt
 
 # Configure git safe directory
-RUN git config --global --add safe.directory /app
+RUN git config --global --add safe.directory /workspace
 
 # Expose port 5000
 EXPOSE 5000
