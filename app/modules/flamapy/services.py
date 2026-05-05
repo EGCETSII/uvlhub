@@ -1,5 +1,5 @@
 from app.modules.flamapy.repositories import FlamapyRepository
-from core.services.BaseService import BaseService
+from splent_framework.services.BaseService import BaseService
 
 
 class FlamapyService(BaseService):

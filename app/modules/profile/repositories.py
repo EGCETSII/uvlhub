@@ -1,5 +1,5 @@
 from app.modules.profile.models import UserProfile
-from core.repositories.BaseRepository import BaseRepository
+from splent_framework.repositories.BaseRepository import BaseRepository
 
 
 class UserProfileRepository(BaseRepository):

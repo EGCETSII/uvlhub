@@ -1,6 +1,6 @@
 from app.modules.dataset.models import DataSet
-from core.resources.generic_resource import create_resource
-from core.serialisers.serializer import Serializer
+from splent_framework.resources.generic_resource import create_resource
+from splent_framework.serialisers.serializer import Serializer
 
 file_fields = {"file_id": "id", "file_name": "name", "size": "get_formatted_size"}
 file_serializer = Serializer(file_fields)

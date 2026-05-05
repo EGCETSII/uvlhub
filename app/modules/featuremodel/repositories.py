@@ -1,7 +1,7 @@
 from sqlalchemy import func
 
 from app.modules.featuremodel.models import FeatureModel, FMMetaData
-from core.repositories.BaseRepository import BaseRepository
+from splent_framework.repositories.BaseRepository import BaseRepository
 
 
 class FeatureModelRepository(BaseRepository):

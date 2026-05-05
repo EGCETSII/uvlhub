@@ -5,7 +5,7 @@ from flask import abort
 
 import docker
 from app.modules.webhook.repositories import WebhookRepository
-from core.services.BaseService import BaseService
+from splent_framework.services.BaseService import BaseService
 
 client = docker.from_env()
 

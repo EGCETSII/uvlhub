@@ -9,8 +9,8 @@ from flask_login import current_user
 from app.modules.dataset.models import DataSet
 from app.modules.featuremodel.models import FeatureModel
 from app.modules.zenodo.repositories import ZenodoRepository
-from core.configuration.configuration import uploads_folder_name
-from core.services.BaseService import BaseService
+from splent_framework.configuration.configuration import uploads_folder_name
+from splent_framework.services.BaseService import BaseService
 
 logger = logging.getLogger(__name__)
 

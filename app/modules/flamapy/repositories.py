@@ -1,5 +1,5 @@
 from app.modules.flamapy.models import Flamapy
-from core.repositories.BaseRepository import BaseRepository
+from splent_framework.repositories.BaseRepository import BaseRepository
 
 
 class FlamapyRepository(BaseRepository):

@@ -5,7 +5,7 @@ import os
 import click
 from flask.cli import with_appcontext
 
-from core.seeders.BaseSeeder import BaseSeeder
+from splent_framework.seeders.BaseSeeder import BaseSeeder
 from rosemary.commands.db_reset import db_reset
 
 

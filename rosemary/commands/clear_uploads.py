@@ -3,7 +3,7 @@ import shutil
 
 import click
 
-from core.configuration.configuration import uploads_folder_name
+from splent_framework.configuration.configuration import uploads_folder_name
 
 
 @click.command(

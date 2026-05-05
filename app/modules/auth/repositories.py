@@ -1,5 +1,5 @@
 from app.modules.auth.models import User
-from core.repositories.BaseRepository import BaseRepository
+from splent_framework.repositories.BaseRepository import BaseRepository
 
 
 class UserRepository(BaseRepository):

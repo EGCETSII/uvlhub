@@ -3,7 +3,7 @@ import subprocess
 
 import click
 
-import core.selenium.common as driver_selector
+import splent_framework.selenium.common as driver_selector
 
 
 @click.command("selenium", help="Executes Selenium tests based on the environment (local, Docker, or Vagrant).")

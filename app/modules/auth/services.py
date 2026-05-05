@@ -6,8 +6,8 @@ from app.modules.auth.models import User
 from app.modules.auth.repositories import UserRepository
 from app.modules.profile.models import UserProfile
 from app.modules.profile.repositories import UserProfileRepository
-from core.configuration.configuration import uploads_folder_name
-from core.services.BaseService import BaseService
+from splent_framework.configuration.configuration import uploads_folder_name
+from splent_framework.services.BaseService import BaseService
 
 
 class AuthenticationService(BaseService):

@@ -23,7 +23,7 @@ from app.modules.hubfile.repositories import (
     HubfileRepository,
     HubfileViewRecordRepository,
 )
-from core.services.BaseService import BaseService
+from splent_framework.services.BaseService import BaseService
 
 logger = logging.getLogger(__name__)
 

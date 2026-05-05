@@ -1,4 +1,4 @@
-from core.seeders.BaseSeeder import BaseSeeder
+from splent_framework.seeders.BaseSeeder import BaseSeeder
 
 
 class HubfileSeeder(BaseSeeder):
