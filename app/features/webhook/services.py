@@ -25,13 +25,13 @@ class WebhookService(BaseService):
             (
                 mount.get("Name") or mount.get("Source")
                 for mount in container.attrs["Mounts"]
-                if mount["Destination"] == "/app"
+                if mount["Destination"] == "/workspace"
             ),
             None,
         )
 
         if not volume_name:
-            raise ValueError("No volume or bind mount found mounted on /app")
+            raise ValueError("No volume or bind mount found mounted on /workspace")
 
         return volume_name
 
@@ -43,11 +43,11 @@ class WebhookService(BaseService):
                     "run",
                     "--rm",
                     "-v",
-                    f"{volume_name}:/app",
+                    f"{volume_name}:/workspace",
                     "-v",
                     "/var/run/docker.sock:/var/run/docker.sock",
                     "-w",
-                    "/app",
+                    "/workspace",
                     *command,
                 ],
                 check=True,
@@ -55,7 +55,7 @@ class WebhookService(BaseService):
         except subprocess.CalledProcessError as e:
             abort(500, description=f"Host command failed: {str(e)}")
 
-    def execute_container_command(self, container, command, workdir="/app"):
+    def execute_container_command(self, container, command, workdir="/workspace"):
         exit_code, output = container.exec_run(command, workdir=workdir)
         if exit_code != 0:
             abort(500, description=f"Container command failed: {output.decode('utf-8')}")
@@ -63,8 +63,17 @@ class WebhookService(BaseService):
 
     def log_deployment(self, container):
         log_entry = f"Deployment successful at {datetime.now(timezone.utc).isoformat()}\n"
-        log_file_path = "/app/deployments.log"
+        log_file_path = "/workspace/deployments.log"
         self.execute_container_command(container, f"sh -c 'echo \"{log_entry}\" >> {log_file_path}'")
 
     def restart_container(self, container):
-        subprocess.Popen(["/bin/sh", "/app/scripts/restart_container.sh", container.id])
+        subprocess.Popen(["/bin/sh", "/workspace/scripts/restart_container.sh", container.id])
+
+    def deploy(self) -> None:
+        """End-to-end deploy: pull latest, refresh deps, migrate, log, restart."""
+        container = self.get_web_container()
+        self.execute_container_command(container, "/workspace/scripts/git_update.sh")
+        self.execute_container_command(container, "pip install -r requirements.txt")
+        self.execute_container_command(container, "flask db upgrade")
+        self.log_deployment(container)
+        self.restart_container(container)
