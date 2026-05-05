@@ -42,7 +42,52 @@ class HubfileService(BaseService):
         hubfile_download_record_repository = HubfileDownloadRecordRepository()
         return hubfile_download_record_repository.total_hubfile_downloads()
 
+    def directory_for(self, hubfile: Hubfile) -> str:
+        """Absolute filesystem directory holding the hubfile, for send_from_directory."""
+        return os.path.dirname(self.get_path_by_hubfile(hubfile))
+
+    def read_text(self, hubfile: Hubfile) -> str | None:
+        """Read the hubfile's UVL content. Returns ``None`` if the file is missing."""
+        path = self.get_path_by_hubfile(hubfile)
+        if not os.path.exists(path):
+            return None
+        with open(path, "r") as f:
+            return f.read()
+
 
 class HubfileDownloadRecordService(BaseService):
     def __init__(self):
         super().__init__(HubfileDownloadRecordRepository())
+
+    def record_download(self, user, file_id: int, cookie: str) -> None:
+        """Record a download once per (user/anonymous, file, cookie) tuple."""
+        from datetime import datetime, timezone
+
+        user_id = user.id if user.is_authenticated else None
+        if self.repository.find_by_user_file_cookie(user_id, file_id, cookie):
+            return
+        self.create(
+            user_id=user_id,
+            file_id=file_id,
+            download_date=datetime.now(timezone.utc),
+            download_cookie=cookie,
+        )
+
+
+class HubfileViewRecordService(BaseService):
+    def __init__(self):
+        super().__init__(HubfileViewRecordRepository())
+
+    def record_view(self, user, file_id: int, cookie: str) -> None:
+        """Record a view once per (user/anonymous, file, cookie) tuple."""
+        from datetime import datetime, timezone
+
+        user_id = user.id if user.is_authenticated else None
+        if self.repository.find_by_user_file_cookie(user_id, file_id, cookie):
+            return
+        self.create(
+            user_id=user_id,
+            file_id=file_id,
+            view_date=datetime.now(timezone.utc),
+            view_cookie=cookie,
+        )

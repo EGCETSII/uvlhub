@@ -34,6 +34,11 @@ class HubfileViewRecordRepository(BaseRepository):
         max_id = self.model.query.with_entities(func.max(self.model.id)).scalar()
         return max_id if max_id is not None else 0
 
+    def find_by_user_file_cookie(self, user_id, file_id: int, cookie: str):
+        return self.model.query.filter_by(
+            user_id=user_id, file_id=file_id, view_cookie=cookie
+        ).first()
+
 
 class HubfileDownloadRecordRepository(BaseRepository):
     def __init__(self):
@@ -42,3 +47,8 @@ class HubfileDownloadRecordRepository(BaseRepository):
     def total_hubfile_downloads(self) -> int:
         max_id = self.model.query.with_entities(func.max(self.model.id)).scalar()
         return max_id if max_id is not None else 0
+
+    def find_by_user_file_cookie(self, user_id, file_id: int, cookie: str):
+        return self.model.query.filter_by(
+            user_id=user_id, file_id=file_id, download_cookie=cookie
+        ).first()
