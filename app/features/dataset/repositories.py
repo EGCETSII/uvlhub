@@ -24,6 +24,11 @@ class DSDownloadRecordRepository(BaseRepository):
         max_id = self.model.query.with_entities(func.max(self.model.id)).scalar()
         return max_id if max_id is not None else 0
 
+    def find_by_user_dataset_cookie(self, user_id, dataset_id: int, cookie: str):
+        return self.model.query.filter_by(
+            user_id=user_id, dataset_id=dataset_id, download_cookie=cookie
+        ).first()
+
 
 class DSMetaDataRepository(BaseRepository):
     def __init__(self):

@@ -272,13 +272,8 @@ class DSDownloadRecordService(BaseService):
         """Record a download once per (user/anonymous, dataset, cookie) tuple."""
         from datetime import datetime, timezone
 
-        from app.features.dataset.models import DSDownloadRecord
-
         user_id = user.id if user.is_authenticated else None
-        already = DSDownloadRecord.query.filter_by(
-            user_id=user_id, dataset_id=dataset_id, download_cookie=cookie
-        ).first()
-        if already:
+        if self.repository.find_by_user_dataset_cookie(user_id, dataset_id, cookie):
             return
         self.create(
             user_id=user_id,
