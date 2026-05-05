@@ -8,7 +8,7 @@ import click
 @click.argument("module_name", required=False)
 @click.option("-k", "keyword", help="Only run tests that match the given substring expression.")
 def test(module_name, keyword):
-    base_path = os.path.join(os.getenv("WORKING_DIR", ""), "app/modules")
+    base_path = os.path.join(os.getenv("WORKING_DIR", ""), "app/features")
     test_path = base_path
 
     if module_name:

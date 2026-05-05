@@ -43,7 +43,7 @@ def create_app(config_name="development"):
 
     @login_manager.user_loader
     def load_user(user_id):
-        from app.modules.auth.models import User
+        from app.features.auth.models import User
 
         return User.query.get(int(user_id))
 

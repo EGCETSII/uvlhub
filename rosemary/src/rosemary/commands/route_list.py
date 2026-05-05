@@ -15,7 +15,7 @@ from flask.cli import with_appcontext
 )
 @with_appcontext
 def route_list(module_name, group):
-    base_path = os.path.join(os.getenv("WORKING_DIR", ""), "app/modules")
+    base_path = os.path.join(os.getenv("WORKING_DIR", ""), "app/features")
 
     # Checks if a module was specified and if it exists
     if module_name:

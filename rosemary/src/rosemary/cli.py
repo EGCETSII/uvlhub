@@ -19,11 +19,12 @@ def cli():
 
 
 # Automatically discover and load commands
-def load_commands(cli_group, commands_dir="rosemary/commands"):
+def load_commands(cli_group):
     """
-    Dynamically import all commands in the specified directory and add them to the CLI group.
+    Dynamically import all command modules in rosemary.commands and add their
+    click.Command attributes to the CLI group.
     """
-    commands_path = os.path.abspath(commands_dir)
+    commands_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "commands")
     for file in os.listdir(commands_path):
         if file.endswith(".py") and not file.startswith("__"):
             module_name = f"rosemary.commands.{file[:-3]}"

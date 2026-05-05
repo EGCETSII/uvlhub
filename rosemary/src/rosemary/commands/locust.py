@@ -16,7 +16,7 @@ def locust(module):
     working_dir = os.getenv("WORKING_DIR", "")
     core_dir = os.path.join(working_dir, "core")
     docker_dir = os.path.join(working_dir, "docker/")
-    modules_dir = os.path.join(working_dir, "app/modules")
+    modules_dir = os.path.join(working_dir, "app/features")
 
     def validate_module(module):
         """Check if the module exists."""

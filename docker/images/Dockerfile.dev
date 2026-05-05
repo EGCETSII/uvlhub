@@ -51,8 +51,8 @@ RUN pip install --no-cache-dir --upgrade pip
 # Install any needed packages specified in requirements.txt
 RUN pip install -r requirements.txt
 
-# Install Rosemary
-RUN pip install -e ./
+# Install Rosemary (lives in ./rosemary with its own pyproject)
+RUN pip install -e ./rosemary
 
 # Expose port 5000 for the Flask app
 EXPOSE 5000

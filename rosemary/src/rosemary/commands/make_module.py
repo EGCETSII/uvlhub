@@ -30,7 +30,7 @@ def render_and_write_file(env, template_name, filename, context):
 @click.command("make:module", help="Creates a new module with a given name.")
 @click.argument("name")
 def make_module(name):
-    modules_root_path = os.path.join(os.getenv("WORKING_DIR", ""), "app/modules")
+    modules_root_path = os.path.join(os.getenv("WORKING_DIR", ""), "app/features")
     module_path = f"{modules_root_path}/{name}"
 
     if os.path.exists(module_path):

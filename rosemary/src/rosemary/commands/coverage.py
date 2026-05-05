@@ -11,7 +11,7 @@ import click
 @click.argument("module_name", required=False)
 @click.option("--html", is_flag=True, help="Generates an HTML coverage report.")
 def coverage(module_name, html):
-    base_path = os.path.join(os.getenv("WORKING_DIR", ""), "app/modules")
+    base_path = os.path.join(os.getenv("WORKING_DIR", ""), "app/features")
     test_path = base_path
 
     if module_name:

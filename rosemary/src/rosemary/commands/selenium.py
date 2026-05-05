@@ -21,7 +21,7 @@ def selenium(module, driver):
         # Environment detection
         # =====================
         working_dir = os.getenv("WORKING_DIR", "")
-        modules_dir = os.path.join(working_dir, "app/modules")
+        modules_dir = os.path.join(working_dir, "app/features")
         driver_selector.set_service_driver(driver)
 
         # =====================
