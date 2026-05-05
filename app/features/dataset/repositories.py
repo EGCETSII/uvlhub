@@ -95,6 +95,16 @@ class DataSetRepository(BaseRepository):
     def count_unsynchronized_datasets(self):
         return self.model.query.join(DSMetaData).filter(DSMetaData.dataset_doi.is_(None)).count()
 
+    def paginate_for_user(self, user_id: int, page: int, per_page: int):
+        return (
+            self.model.query.filter(DataSet.user_id == user_id)
+            .order_by(DataSet.created_at.desc())
+            .paginate(page=page, per_page=per_page, error_out=False)
+        )
+
+    def count_for_user(self, user_id: int) -> int:
+        return self.model.query.filter(DataSet.user_id == user_id).count()
+
     def latest_synchronized(self):
         return (
             self.model.query.join(DSMetaData)
