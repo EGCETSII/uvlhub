@@ -2,7 +2,6 @@ import os
 
 from dotenv import load_dotenv
 from flask import Flask
-from flask_login import LoginManager
 from flask_migrate import Migrate
 
 from splent_framework.configuration.configuration import get_app_version
@@ -34,24 +33,11 @@ def create_app(config_name: str = "development") -> Flask:
 
     env = "prod" if config_name == "production" else "dev"
     register_features(app, env=env)
-    _setup_login(app)
     LoggingManager(app).setup_logging()
     ErrorHandlerManager(app).register_error_handlers()
     _setup_jinja_globals(app)
 
     return app
-
-
-def _setup_login(app: Flask) -> None:
-    login_manager = LoginManager()
-    login_manager.init_app(app)
-    login_manager.login_view = "auth.login"
-
-    @login_manager.user_loader
-    def load_user(user_id):
-        from app.features.auth.models import User
-
-        return User.query.get(int(user_id))
 
 
 def _setup_jinja_globals(app: Flask) -> None:
