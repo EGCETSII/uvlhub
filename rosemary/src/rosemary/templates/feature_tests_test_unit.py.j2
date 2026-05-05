@@ -1,6 +1,12 @@
-from splent_framework.fixtures.fixtures import test_client  # noqa: F401
+"""Unit tests for the {{ feature_name }} feature.
+
+Pure logic only — no Flask app, no database. Anything that needs persistence
+or the test client belongs in test_service.py or test_integration.py.
+"""
+import pytest
+
+pytestmark = pytest.mark.unit
 
 
-def test_{{ feature_name }}_index(test_client):
-    response = test_client.get("/{{ feature_name }}")
-    assert response.status_code == 200, "/{{ feature_name }} did not return 200"
+def test_{{ feature_name }}_placeholder():
+    assert True

@@ -38,3 +38,23 @@ profile = "black"
 [tool.flake8]
 max-line-length = 120
 extend-ignore = ["E203", "W503"]
+
+# --------------------
+# Testing
+# --------------------
+
+[tool.pytest.ini_options]
+# Tests live next to the feature they exercise, plus optional cross-feature
+# tests under tests/. Selenium and locust files are excluded by default —
+# rosemary test exposes flags to opt into them.
+testpaths = ["app/features", "tests"]
+python_files = ["test_*.py"]
+filterwarnings = ["ignore::DeprecationWarning"]
+markers = [
+    "unit: pure unit tests, no Flask app, no database",
+    "repository: repository tests against the database (no business logic)",
+    "service: service-level tests against the database (orchestration + repos)",
+    "integration: HTTP-level integration tests via Flask test client",
+    "e2e: browser-driven end-to-end tests (requires the selenium grid)",
+    "load: locust load tests (run via `rosemary locust`)",
+]

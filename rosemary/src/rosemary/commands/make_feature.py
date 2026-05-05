@@ -50,8 +50,11 @@ def make_feature(name: str) -> None:
         os.path.join("templates", name, "index.html"): "feature_templates_index.html.j2",
         "assets/scripts/scripts.js": "feature_scripts.js.j2",
         "tests/test_unit.py": "feature_tests_test_unit.py.j2",
-        "tests/locustfile.py": "feature_tests_locustfile.py.j2",
+        "tests/test_repository.py": "feature_tests_test_repository.py.j2",
+        "tests/test_service.py": "feature_tests_test_service.py.j2",
+        "tests/test_integration.py": "feature_tests_test_integration.py.j2",
         "tests/test_selenium.py": "feature_tests_test_selenium.py.j2",
+        "tests/locustfile.py": "feature_tests_locustfile.py.j2",
     }
 
     os.makedirs(os.path.join(feature_path, "templates", name), exist_ok=True)
