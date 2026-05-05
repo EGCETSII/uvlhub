@@ -1,31 +1,14 @@
-[build-system]
-requires = ["setuptools>=80.3.1", "wheel"]
-build-backend = "setuptools.build_meta"
-
 [project]
-name = "rosemary"
+name = "uvlhub"
 version = "1.0.0"
-description = "Rosemary is a CLI to be able to work on UVLHub development more easily."
+description = "UVLHub — Flask product built on splent_framework."
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = [
-    "click",
-    "python-dotenv"
-    ]
 
-[project.optional-dependencies]
-dev = [
-    "black",
-    "isort",
-    "flake8",
-    "autoflake"
-    ]
-
-[project.scripts]
-rosemary = "rosemary.cli:cli"
-
-[tool.setuptools]
-packages = ["rosemary"]
+[tool.splent]
+features = []
+features_dev = []
+features_prod = []
 
 # --------------------
 # Formatting & linting
