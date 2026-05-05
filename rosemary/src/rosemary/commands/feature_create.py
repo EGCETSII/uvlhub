@@ -27,9 +27,9 @@ def _render(env: Environment, template_name: str, dest: str, context: dict) -> N
         f.write(content)
 
 
-@click.command("make:feature", help="Creates a new feature with a given name.")
+@click.command("feature:create", help="Creates a new feature with a given name.")
 @click.argument("name")
-def make_feature(name: str) -> None:
+def feature_create(name: str) -> None:
     features_root = os.path.join(os.getenv("WORKING_DIR", ""), "app/features")
     feature_path = os.path.join(features_root, name)
 
