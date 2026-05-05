@@ -27,6 +27,12 @@ RUN apt-get clean \
 # Set the working directory in the container to /app
 WORKDIR /app
 
+# Make /app importable from anywhere (e.g. the rosemary CLI script in /usr/local/bin
+# imports `app` for db:seed and friends). Otherwise Python only sees /app on its
+# sys.path while running from cwd, but installed entry-point scripts run without
+# cwd in sys.path.
+ENV PYTHONPATH=/app
+
 # Copy requirements.txt to the /app working directory
 COPY requirements.txt .
 
