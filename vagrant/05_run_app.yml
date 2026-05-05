@@ -18,12 +18,6 @@
 
   tasks:
 
-    - name: Add webhook to .moduleignore
-      shell: echo "webhook" > {{ working_dir }}.moduleignore
-      args:
-        executable: /bin/bash
-      environment: "{{ common_environment }}"
-
     - name: Set database with Rosemary
       shell: |
         source {{ working_dir }}vagrant_venv/bin/activate

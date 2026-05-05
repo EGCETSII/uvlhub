@@ -26,7 +26,8 @@ def create_app(config_name: str = "development") -> Flask:
     db.init_app(app)
     migrate.init_app(app, db)
 
-    register_features(app)
+    env = "prod" if config_name == "production" else "dev"
+    register_features(app, env=env)
     _setup_login(app)
     LoggingManager(app).setup_logging()
     ErrorHandlerManager(app).register_error_handlers()
