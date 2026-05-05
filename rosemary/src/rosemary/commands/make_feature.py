@@ -48,7 +48,7 @@ def make_feature(name: str) -> None:
         "forms.py": "feature_forms.py.j2",
         "seeders.py": "feature_seeders.py.j2",
         os.path.join("templates", name, "index.html"): "feature_templates_index.html.j2",
-        "assets/scripts.js": "feature_scripts.js.j2",
+        "assets/scripts/scripts.js": "feature_scripts.js.j2",
         "tests/test_unit.py": "feature_tests_test_unit.py.j2",
         "tests/locustfile.py": "feature_tests_locustfile.py.j2",
         "tests/test_selenium.py": "feature_tests_test_selenium.py.j2",
@@ -56,7 +56,7 @@ def make_feature(name: str) -> None:
 
     os.makedirs(os.path.join(feature_path, "templates", name), exist_ok=True)
     os.makedirs(os.path.join(feature_path, "tests"), exist_ok=True)
-    os.makedirs(os.path.join(feature_path, "assets"), exist_ok=True)
+    os.makedirs(os.path.join(feature_path, "assets", "scripts"), exist_ok=True)
 
     open(os.path.join(feature_path, "tests", "__init__.py"), "a").close()
 
