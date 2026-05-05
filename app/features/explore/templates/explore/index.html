@@ -151,5 +151,5 @@
 {% endblock %}
 
 {% block scripts %}
-    <script src="{{ url_for('explore.scripts') }}"></script>
+    <script src="{{ url_for('explore.assets', subfolder='scripts', filename='scripts.js') }}"></script>
 {% endblock %}

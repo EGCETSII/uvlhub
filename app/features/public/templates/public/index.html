@@ -282,5 +282,5 @@
 {% endblock %}
 
 {% block scripts %}
-    <script src="{{ url_for('public.scripts') }}"></script>
+    <script src="{{ url_for('public.assets', subfolder='scripts', filename='scripts.js') }}"></script>
 {% endblock %}

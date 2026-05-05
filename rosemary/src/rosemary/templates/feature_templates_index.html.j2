@@ -7,5 +7,5 @@
 {% raw %}{%{% endraw %} endblock {% raw %}%}{% endraw %}
 
 {% raw %}{%{% endraw %} block scripts {% raw %}%}{% endraw %}
-    <script src="{% raw %}{{ url_for('{% endraw %}{{ feature_name }}{% raw %}.scripts') }}{% endraw %}"></script>
+    <script src="{% raw %}{{ url_for('{% endraw %}{{ feature_name }}{% raw %}.assets', subfolder='scripts', filename='scripts.js') }}{% endraw %}"></script>
 {% raw %}{%{% endraw %} endblock {% raw %}%}{% endraw %}

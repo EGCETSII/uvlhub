@@ -527,6 +527,6 @@
 {% endblock %}
 
 {% block scripts %}
-    <script src="{{ url_for('zenodo.scripts') }}"></script>
-    <script src="{{ url_for('dataset.scripts') }}"></script>
+    <script src="{{ url_for('zenodo.assets', subfolder='scripts', filename='scripts.js') }}"></script>
+    <script src="{{ url_for('dataset.assets', subfolder='scripts', filename='scripts.js') }}"></script>
 {% endblock %}
