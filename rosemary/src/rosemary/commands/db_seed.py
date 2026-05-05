@@ -33,8 +33,10 @@ def get_module_seeders(module_path, specific_module=None):
                 ):
                     seeders.append(potential_seeder_class())
 
-    # Sort seeders by priority
-    seeders.sort(key=lambda seeder: seeder.priority)
+    # Sort seeders by priority. splent_framework's BaseSeeder doesn't ship
+    # a priority attribute, so fall back to 0 — a feature can opt in by
+    # declaring ``priority = N`` on its seeder class.
+    seeders.sort(key=lambda seeder: getattr(seeder, "priority", 0))
 
     return seeders
 
