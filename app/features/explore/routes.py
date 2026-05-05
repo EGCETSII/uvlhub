@@ -4,15 +4,19 @@ from app.features.explore import explore_bp
 from app.features.explore.forms import ExploreForm
 from app.features.explore.services import ExploreService
 
+explore_service = ExploreService()
 
-@explore_bp.route("/explore", methods=["GET", "POST"])
+
+@explore_bp.route("/explore", methods=["GET"])
 def index():
-    if request.method == "GET":
-        query = request.args.get("query", "")
-        form = ExploreForm()
-        return render_template("explore/index.html", form=form, query=query)
+    return render_template(
+        "explore/index.html",
+        form=ExploreForm(),
+        query=request.args.get("query", ""),
+    )
 
-    if request.method == "POST":
-        criteria = request.get_json()
-        datasets = ExploreService().filter(**criteria)
-        return jsonify([dataset.to_dict() for dataset in datasets])
+
+@explore_bp.route("/explore", methods=["POST"])
+def search():
+    datasets = explore_service.filter(**(request.get_json() or {}))
+    return jsonify([dataset.to_dict() for dataset in datasets])
