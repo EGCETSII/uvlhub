@@ -136,6 +136,55 @@ class DataSetService(BaseService):
     def update_dsmetadata(self, id, **kwargs):
         return self.dsmetadata_repository.update(id, **kwargs)
 
+    def upload_dataset(self, form, current_user) -> dict:
+        """End-to-end dataset upload: persist locally, push to Zenodo, clean up.
+
+        Returns a result dict with ``status`` ("ok" | "partial" | "error") and a
+        ``message`` summarising what happened. The route layer only needs to
+        translate that into a JSON response — none of this orchestration
+        belongs in a request handler.
+        """
+        # ── Persist locally ─────────────────────────────────────────────
+        try:
+            dataset = self.create_from_form(form=form, current_user=current_user)
+            logger.info("Created dataset: %s", dataset)
+            self.move_feature_models(dataset)
+        except Exception as exc:
+            logger.exception("Exception while creating dataset locally: %s", exc)
+            return {"status": "error", "code": 400, "message": str(exc)}
+
+        # ── Push to Zenodo (best-effort: failure here is "partial") ─────
+        # Imported inside the method to avoid a circular import at module load.
+        from app.features.zenodo.services import ZenodoService
+
+        zenodo = ZenodoService()
+        zenodo_data = {}
+        try:
+            zenodo_data = zenodo.create_new_deposition(dataset) or {}
+        except Exception as exc:
+            logger.exception("Exception while creating deposition in Zenodo: %s", exc)
+
+        if zenodo_data.get("conceptrecid"):
+            deposition_id = zenodo_data.get("id")
+            self.update_dsmetadata(dataset.ds_meta_data_id, deposition_id=deposition_id)
+            try:
+                for feature_model in dataset.feature_models:
+                    zenodo.upload_file(dataset, deposition_id, feature_model)
+                zenodo.publish_deposition(deposition_id)
+                deposition_doi = zenodo.get_doi(deposition_id)
+                self.update_dsmetadata(dataset.ds_meta_data_id, dataset_doi=deposition_doi)
+            except Exception as exc:
+                msg = f"could not upload feature models to Zenodo and update DOI: {exc}"
+                # The local dataset already exists; surface a 200 with a warning.
+                return {"status": "partial", "code": 200, "message": msg}
+
+        # ── Clean up the user's temp folder ─────────────────────────────
+        temp_path = current_user.temp_folder()
+        if os.path.isdir(temp_path):
+            shutil.rmtree(temp_path)
+
+        return {"status": "ok", "code": 200, "message": "Everything works!"}
+
     def get_uvlhub_doi(self, dataset: DataSet) -> str:
         domain = os.getenv("DOMAIN", "localhost")
         return f"http://{domain}/doi/{dataset.ds_meta_data.dataset_doi}"
