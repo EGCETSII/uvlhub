@@ -1,6 +1,7 @@
 import logging
 
 from flask import after_this_request, jsonify, send_file
+from werkzeug.exceptions import NotFound
 
 from app.features.flamapy import flamapy_bp
 from app.features.flamapy.services import FlamapyService
@@ -23,7 +24,13 @@ def check_uvl(file_id):
 
 @flamapy_bp.route("/flamapy/valid/<int:file_id>", methods=["GET"])
 def valid(file_id):
-    return jsonify({"success": True, "file_id": file_id})
+    if not flamapy_service.hubfile_exists(file_id):
+        return jsonify({"error": f"No hubfile with id {file_id}"}), 404
+    try:
+        errors = flamapy_service.validate_uvl(file_id)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    return jsonify({"success": not errors, "file_id": file_id}), 200
 
 
 @flamapy_bp.route("/flamapy/to_glencoe/<int:file_id>", methods=["GET"])
@@ -42,7 +49,12 @@ def to_cnf(file_id):
 
 
 def _stream_export(file_id, target):
-    path, download_name = flamapy_service.export(file_id, target)
+    try:
+        path, download_name = flamapy_service.export(file_id, target)
+    except NotFound:
+        return jsonify({"error": f"No hubfile with id {file_id}"}), 404
+    except FileNotFoundError:
+        return jsonify({"error": "The UVL file is missing from disk"}), 500
 
     @after_this_request
     def _cleanup(response):

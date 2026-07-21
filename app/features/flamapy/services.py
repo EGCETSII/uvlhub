@@ -23,8 +23,8 @@ class _UVLErrorListener(ErrorListener):
         self.errors.append(f"The UVL has the following {kind} that prevents reading it: Line {line}:{column} - {msg}")
 
 
-# (writer class, tempfile suffix, download-name suffix). ``None`` writer means
-# the conversion needs an extra step before writing — see _build_export().
+# (writer class, tempfile suffix, download-name suffix). The "cnf" target needs
+# an extra FmToPysat step before writing — see export().
 _EXPORT_FORMATS = {
     "glencoe": (GlencoeWriter, ".json", "_glencoe.txt"),
     "splot": (SPLOTWriter, ".splx", "_splot.txt"),
@@ -58,7 +58,15 @@ class FlamapyService:
         parser.removeErrorListeners()
         parser.addErrorListener(listener)
 
+        # ANTLR is lazy: no input is tokenised or parsed until a rule is
+        # invoked, so errors only surface once the entry rule consumes the file.
+        parser.featureModel()
+
         return listener.errors
+
+    def hubfile_exists(self, file_id: int) -> bool:
+        """Return True when a hubfile row with *file_id* exists."""
+        return self._hubfiles.get_by_id(file_id) is not None
 
     def export(self, file_id: int, target: str) -> tuple[str, str]:
         """Convert the UVL referenced by *file_id* to *target* format.

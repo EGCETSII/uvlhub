@@ -16,10 +16,13 @@ pytestmark = pytest.mark.integration
 
 UVL_EXAMPLES = Path(__file__).resolve().parents[2] / "dataset" / "uvl_examples"
 
+MALFORMED_UVL = "features\n    Chat\n        mandatory\n            @@@ ???\n"
 
-def _persist_hubfile(test_client, filename="model.uvl", write_to_disk=True):
+
+def _persist_hubfile(test_client, filename="model.uvl", write_to_disk=True, uvl_content=None):
     """Create the owning rows for a hubfile and lay a real UVL model on disk."""
-    uvl_content = (UVL_EXAMPLES / "file1.uvl").read_text()
+    if uvl_content is None:
+        uvl_content = (UVL_EXAMPLES / "file1.uvl").read_text()
 
     with test_client.application.app_context():
         user = User(email=f"owner-{filename}@example.com", password="ownerpass")
@@ -71,6 +74,17 @@ def test_check_uvl_reports_a_valid_model(test_client):
     assert response.get_json() == {"message": "Valid Model"}
 
 
+def test_check_uvl_reports_errors_for_a_malformed_model(test_client):
+    file_id = _persist_hubfile(test_client, filename="broken.uvl", uvl_content=MALFORMED_UVL)
+
+    response = test_client.get(f"/flamapy/check_uvl/{file_id}")
+
+    assert response.status_code == 400
+    errors = response.get_json()["errors"]
+    assert errors
+    assert any("token recognition error" in error for error in errors)
+
+
 def test_check_uvl_returns_a_json_error_for_an_unknown_file(test_client):
     response = test_client.get("/flamapy/check_uvl/424242")
 
@@ -78,11 +92,29 @@ def test_check_uvl_returns_a_json_error_for_an_unknown_file(test_client):
     assert "error" in response.get_json()
 
 
-def test_valid_endpoint_echoes_the_requested_file_id(test_client):
-    response = test_client.get("/flamapy/valid/7")
+def test_valid_endpoint_confirms_a_well_formed_model(test_client):
+    file_id = _persist_hubfile(test_client)
+
+    response = test_client.get(f"/flamapy/valid/{file_id}")
 
     assert response.status_code == 200
-    assert response.get_json() == {"success": True, "file_id": 7}
+    assert response.get_json() == {"success": True, "file_id": file_id}
+
+
+def test_valid_endpoint_rejects_a_malformed_model(test_client):
+    file_id = _persist_hubfile(test_client, filename="broken.uvl", uvl_content=MALFORMED_UVL)
+
+    response = test_client.get(f"/flamapy/valid/{file_id}")
+
+    assert response.status_code == 200
+    assert response.get_json() == {"success": False, "file_id": file_id}
+
+
+def test_valid_endpoint_returns_404_for_an_unknown_file(test_client):
+    response = test_client.get("/flamapy/valid/424242")
+
+    assert response.status_code == 404
+    assert "error" in response.get_json()
 
 
 def test_to_cnf_downloads_a_dimacs_attachment(test_client):
@@ -125,10 +157,17 @@ def test_to_splot_downloads_a_splx_attachment(test_client):
     assert ":r Chat (Chat)" in body
 
 
-def test_export_routes_do_not_handle_a_missing_uvl_file(test_client):
-    """Unlike check_uvl, the export routes have no error handling, so a missing
-    file on disk escapes the view instead of becoming a 500 payload."""
+def test_export_routes_return_a_json_error_for_a_missing_uvl_file(test_client):
     file_id = _persist_hubfile(test_client, filename="ghost.uvl", write_to_disk=False)
 
-    with pytest.raises(FileNotFoundError):
-        test_client.get(f"/flamapy/to_cnf/{file_id}")
+    response = test_client.get(f"/flamapy/to_cnf/{file_id}")
+
+    assert response.status_code == 500
+    assert "error" in response.get_json()
+
+
+def test_export_routes_return_404_for_an_unknown_file(test_client):
+    response = test_client.get("/flamapy/to_cnf/424242")
+
+    assert response.status_code == 404
+    assert "error" in response.get_json()

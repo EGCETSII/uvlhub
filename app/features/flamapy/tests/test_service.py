@@ -73,13 +73,15 @@ def test_validate_uvl_accepts_a_well_formed_model(test_client):
         assert FlamapyService().validate_uvl(hubfile.id) == []
 
 
-def test_validate_uvl_does_not_report_errors_for_a_malformed_model(test_client):
-    """Locks in current behaviour: validate_uvl never invokes a parser rule, so
-    syntax errors go unreported. See the bug note in the feature report."""
+def test_validate_uvl_reports_errors_for_a_malformed_model(test_client):
     with test_client.application.app_context():
         hubfile = _persist_hubfile(MALFORMED_UVL, filename="broken.uvl")
 
-        assert FlamapyService().validate_uvl(hubfile.id) == []
+        errors = FlamapyService().validate_uvl(hubfile.id)
+
+        assert errors
+        assert any("token recognition error" in error for error in errors)
+        assert all("Line " in error for error in errors)
 
 
 def test_export_to_cnf_writes_dimacs(test_client):
