@@ -20,6 +20,10 @@ WORKDIR /workspace
 # Copy files
 COPY app/ ./app
 COPY migrations/ ./migrations
+# The feature loader reads [tool.splent] from the directory above app/.
+# Without this file the declarative filter is inactive and every package
+# under app/features/ is loaded, whatever the environment declares.
+COPY pyproject.toml .
 
 # Copy requirements.txt into the working directory /workspace
 COPY requirements.txt .
