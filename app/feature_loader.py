@@ -33,7 +33,7 @@ _SUBMODULES = ("routes", "models", "hooks", "signals")
 
 
 def register_features(app: Flask, env: str = "dev") -> None:
-    declared = _read_declared_features(env)
+    declared = declared_features(env)
 
     import app.features as features_pkg
 
@@ -49,7 +49,7 @@ def register_features(app: Flask, env: str = "dev") -> None:
         _register_blueprints(name, feature_module, app)
 
 
-def _read_declared_features(env: str) -> set[str]:
+def declared_features(env: str) -> set[str]:
     """Return the union of [tool.splent.features] and [tool.splent.features_<env>].
 
     Empty set means "no declarative filter" — load every feature found on disk.
