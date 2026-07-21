@@ -51,22 +51,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
-      # Step 2: Set up Python environment (version 3.12)
+      # Step 2: Set up Python environment (version 3.13 — splent_framework requires it)
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: '3.12'
+          python-version: '3.13'
 
-      # Step 3: Remove local editable mode for rosemary dependency (not CI-friendly)
-      - name: Delete rosemary editable mode
-        run: sed -i '/rosemary @ file:\/\/\/app/d' requirements.txt
-
-      # Step 4: Install Python dependencies
+      # Step 3: Install Python dependencies
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install -e ./rosemary
 
-      # Step 5: Run the pytest test suite (ignoring Selenium tests)
+      # Step 4: Run the pytest test suite (ignoring Selenium tests)
       - name: Run Tests
-        run: pytest app/modules/ --ignore-glob='*selenium*'
+        run: pytest app/features/ --ignore-glob='*selenium*'

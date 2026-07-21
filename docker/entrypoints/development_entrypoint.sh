@@ -15,8 +15,10 @@
 # Exit immediately if a command exits with a non-zero status
 set -e
 
-# Install Rosemary
-pip install -e ./
+# Re-install Rosemary in editable mode against the volume-mounted source.
+# The Dockerfile already runs this at build time, but the dev compose binds
+# ./uvlhub:/workspace on top, so we redo it from inside the bind mount.
+pip install -e ./rosemary
 
 # Wait for the database to be ready by running a script
 sh ./scripts/wait-for-db.sh

@@ -1,5 +1,5 @@
 # Use an official Python runtime as a parent image
-FROM python:3.12-slim
+FROM python:3.13-slim
 
 # Set this environment variable to suppress the "Running as root" warning from pip
 ENV PIP_ROOT_USER_ACTION=ignore
@@ -24,10 +24,16 @@ RUN apt-get install -y --no-install-recommends ca-certificates gnupg lsb-release
 RUN apt-get clean \
     && rm -rf /var/lib/apt/lists/*
         
-# Set the working directory in the container to /app
-WORKDIR /app
+# Set the working directory in the container to /workspace
+WORKDIR /workspace
 
-# Copy requirements.txt to the /app working directory
+# Make /workspace importable from anywhere (e.g. the rosemary CLI script in /usr/local/bin
+# imports `app` for db:seed and friends). Otherwise Python only sees /workspace on its
+# sys.path while running from cwd, but installed entry-point scripts run without
+# cwd in sys.path.
+ENV PYTHONPATH=/workspace
+
+# Copy requirements.txt to the /workspace working directory
 COPY requirements.txt .
 
 # Removes cache at the build stage
@@ -51,8 +57,8 @@ RUN pip install --no-cache-dir --upgrade pip
 # Install any needed packages specified in requirements.txt
 RUN pip install -r requirements.txt
 
-# Install Rosemary
-RUN pip install -e ./
+# Install Rosemary (lives in ./rosemary with its own pyproject)
+RUN pip install -e ./rosemary
 
 # Expose port 5000 for the Flask app
 EXPOSE 5000

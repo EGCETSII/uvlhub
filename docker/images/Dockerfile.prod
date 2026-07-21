@@ -1,5 +1,5 @@
 # Use an official Python runtime as a parent image, Alpine version for a lighter footprint
-FROM python:3.12-slim
+FROM python:3.13-slim
 
 # Install necessary packages
 RUN apt-get update \
@@ -14,15 +14,14 @@ RUN apt-get update \
 RUN apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Set the working directory in the container to /app
-WORKDIR /app
+# Set the working directory in the container to /workspace
+WORKDIR /workspace
 
 # Copy files
 COPY app/ ./app
-COPY core/ ./core
 COPY migrations/ ./migrations
 
-# Copy requirements.txt into the working directory /app
+# Copy requirements.txt into the working directory /workspace
 COPY requirements.txt .
 
 # Removes cache at the build stage
@@ -42,7 +41,7 @@ RUN pip install -r requirements.txt
 ARG VERSION_TAG
 
 # Create the .version file with the content of VERSION_TAG
-RUN echo $VERSION_TAG > /app/.version
+RUN echo $VERSION_TAG > /workspace/.version
 
 # Expose port 5000
 EXPOSE 5000

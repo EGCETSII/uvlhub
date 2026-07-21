@@ -1,0 +1,22 @@
+"""End-to-end browser tests for the {{ feature_name }} feature.
+
+Driven by the selenium grid started by ``docker compose up``. Run with::
+
+    rosemary test {{ feature_name }} --e2e
+"""
+import pytest
+
+from splent_framework.environment.host import get_host_for_selenium_testing
+from splent_framework.selenium.common import close_driver, initialize_driver
+
+pytestmark = pytest.mark.e2e
+
+
+def test_{{ feature_name }}_index():
+    driver = initialize_driver()
+    try:
+        host = get_host_for_selenium_testing()
+        driver.get(f"{host}/{{ feature_name }}")
+        # TODO: assertions against the {{ feature_name }} feature
+    finally:
+        close_driver(driver)
