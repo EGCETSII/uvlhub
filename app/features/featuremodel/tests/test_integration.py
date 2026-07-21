@@ -9,7 +9,7 @@ def test_featuremodel_page_renders_its_own_template(test_client):
     response = test_client.get("/featuremodel")
     assert response.status_code == 200
     # The feature's own script tag is the only markup the template contributes.
-    assert b'<script src="/featuremodel/scripts/scripts.js"></script>' in response.data
+    assert b'<script src="/featuremodel/js/scripts.js"></script>' in response.data
 
 
 def test_featuremodel_page_is_public(test_client):

@@ -24,7 +24,7 @@ def test_index_page_renders(test_client):
     assert response.status_code == 200
     # The feature template is what rendered, not just some base page: it pulls
     # in the zenodo asset bundle served by the blueprint's assets route.
-    assert b"/zenodo/scripts/scripts.js" in response.data
+    assert b"/zenodo/js/scripts.js" in response.data
 
 
 def test_test_endpoint_reports_success_when_the_full_round_trip_works(test_client, tmp_path, monkeypatch):
