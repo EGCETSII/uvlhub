@@ -21,7 +21,14 @@ features = [
 features_dev = [
     "webhook",
 ]
-features_prod = []
+# webhook is deliberately in BOTH env lists: production needs /webhook/deploy
+# for the CD pipeline (CD_webhook.yml posts there after a green Pytest run),
+# and development/testing need it for its own test suite. The endpoint refuses
+# outright when WEBHOOK_TOKEN is not configured, so enabling it in production
+# does not open an unauthenticated surface.
+features_prod = [
+    "webhook",
+]
 
 # --------------------
 # Formatting & linting
