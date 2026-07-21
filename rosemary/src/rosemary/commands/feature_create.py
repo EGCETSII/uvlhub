@@ -47,7 +47,7 @@ def feature_create(name: str) -> None:
         "forms.py": "feature_forms.py.j2",
         "seeders.py": "feature_seeders.py.j2",
         os.path.join("templates", name, "index.html"): "feature_templates_index.html.j2",
-        "assets/scripts/scripts.js": "feature_scripts.js.j2",
+        "assets/js/scripts.js": "feature_scripts.js.j2",
         "tests/test_unit.py": "feature_tests_test_unit.py.j2",
         "tests/test_repository.py": "feature_tests_test_repository.py.j2",
         "tests/test_service.py": "feature_tests_test_service.py.j2",
@@ -58,7 +58,7 @@ def feature_create(name: str) -> None:
 
     os.makedirs(os.path.join(feature_path, "templates", name), exist_ok=True)
     os.makedirs(os.path.join(feature_path, "tests"), exist_ok=True)
-    os.makedirs(os.path.join(feature_path, "assets", "scripts"), exist_ok=True)
+    os.makedirs(os.path.join(feature_path, "assets", "js"), exist_ok=True)
 
     open(os.path.join(feature_path, "tests", "__init__.py"), "a").close()
 

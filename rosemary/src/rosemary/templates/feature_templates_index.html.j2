@@ -6,6 +6,5 @@
 
 {% raw %}{%{% endraw %} endblock {% raw %}%}{% endraw %}
 
-{% raw %}{%{% endraw %} block scripts {% raw %}%}{% endraw %}
-    <script src="{% raw %}{{ url_for('{% endraw %}{{ feature_name }}{% raw %}.assets', subfolder='scripts', filename='scripts.js') }}{% endraw %}"></script>
-{% raw %}{%{% endraw %} endblock {% raw %}%}{% endraw %}
+{% raw %}{#{% endraw %} This feature's script is declared with register_asset in __init__.py and
+   rendered by base_template.html, so there is no script tag here. {% raw %}#}{% endraw %}
