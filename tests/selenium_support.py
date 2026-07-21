@@ -57,6 +57,11 @@ def initialize_driver(browser: str | None = None):
     else:
         driver = webdriver.Chrome()
 
+    # Deterministic viewport. Browser defaults differ (chrome nodes open at
+    # ~945px, firefox at ~1280px), and below the responsive breakpoint the
+    # sidebar collapses off-canvas, so the same test can pass on one browser
+    # and fail on the other with an off-screen click target.
+    driver.set_window_size(1920, 1080)
     driver.set_page_load_timeout(30)
     driver.implicitly_wait(10)
     return driver
