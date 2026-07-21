@@ -22,12 +22,33 @@ def locust(feature):
         if feature:
             feature_path = os.path.join(features_dir, feature)
             if not os.path.exists(feature_path):
-                raise click.UsageError(f"feature '{feature}' does not exist.")
+                raise click.UsageError(f"Feature '{feature}' does not exist.")
             locustfile_path = os.path.join(feature_path, "tests", "locustfile.py")
             if not os.path.exists(locustfile_path):
                 raise click.UsageError(
                     f"Locustfile for feature '{feature}' does not exist at path " f"'{locustfile_path}'."
                 )
+
+    def resolve_locustfiles(feature):
+        """Return the -f argument: one feature's file, or every feature's.
+
+        Locust takes a comma-separated list, so the whole-project run is
+        assembled here rather than delegated to splent_framework's
+        locustfile_bootstrap. That bootstrap still globs app/modules/*, a
+        directory this project no longer has, so importing it raises
+        "ValueError: No User class found!" before locust starts.
+        """
+        if feature:
+            return os.path.join(features_dir, feature, "tests", "locustfile.py")
+
+        paths = sorted(
+            os.path.join(features_dir, name, "tests", "locustfile.py")
+            for name in os.listdir(features_dir)
+            if os.path.isfile(os.path.join(features_dir, name, "tests", "locustfile.py"))
+        )
+        if not paths:
+            raise click.UsageError(f"No locustfile found under {features_dir}/*/tests/.")
+        return ",".join(paths)
 
     def run_docker_locust(volume_name, network_name, feature):
         """Build and run the Locust container with the specified volume and network."""
@@ -81,8 +102,7 @@ def locust(feature):
             "WORKING_DIR=/workspace/",
             "locust-image",
         ]
-        if feature:
-            up_command.extend(["-f", f"{features_dir}/{feature}/tests/locustfile.py"])
+        up_command.extend(["-f", resolve_locustfiles(feature)])
 
         click.echo(f"Docker Run command: {' '.join(up_command)}")
         subprocess.run(up_command, check=True)
@@ -101,13 +121,7 @@ def locust(feature):
             click.echo("Locust is already running.")
             return
 
-        if feature:
-            locustfile_path = os.path.join(features_dir, feature, "tests", "locustfile.py")
-        else:
-            from splent_framework.bootstraps import locustfile_bootstrap
-
-            locustfile_path = locustfile_bootstrap.__file__
-        locust_command = ["locust", "-f", locustfile_path]
+        locust_command = ["locust", "-f", resolve_locustfiles(feature)]
         click.echo(f"Locust command: {' '.join(locust_command)}")
         subprocess.Popen(
             locust_command,
@@ -188,15 +202,23 @@ def stop():
                 os.kill(proc.info["pid"], signal.SIGTERM)
 
     def stop_docker_locust():
-        click.echo("Stopping Locust container if it is running...")
-        stop_command = ["docker", "stop", "locust_container"]
-        rm_command = ["docker", "rm", "locust_container"]
+        # Swallow docker's own stderr: with no container running it printed
+        # "Error response from daemon: No such container" twice, which reads
+        # like a failure when there is simply nothing to stop.
+        running = subprocess.run(
+            ["docker", "ps", "-aq", "-f", "name=^locust_container$"],
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
 
-        # Stop the Locust container if it is running
-        subprocess.run(stop_command)
+        if not running:
+            click.echo("No Locust container is running.")
+            return
 
-        # Remove the Locust container
-        subprocess.run(rm_command)
+        click.echo("Stopping Locust container...")
+        subprocess.run(["docker", "stop", "locust_container"], capture_output=True)
+        subprocess.run(["docker", "rm", "locust_container"], capture_output=True)
+        click.echo(click.style("Locust container stopped and removed.", fg="green"))
 
     if working_dir == "/workspace/":
         stop_docker_locust()
