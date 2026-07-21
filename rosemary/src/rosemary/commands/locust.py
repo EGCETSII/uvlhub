@@ -29,8 +29,8 @@ def locust(feature):
                     f"Locustfile for feature '{feature}' does not exist at path " f"'{locustfile_path}'."
                 )
 
-    def run_docker_locust(volume_name, feature):
-        """Build and run the Locust container with the specified volume."""
+    def run_docker_locust(volume_name, network_name, feature):
+        """Build and run the Locust container with the specified volume and network."""
 
         try:
             # Check if the container already exists
@@ -69,7 +69,7 @@ def locust(feature):
             "--name",
             "locust_container",
             "--network",
-            "docker_uvlhub_network",
+            network_name,
             "locust-image",
         ]
         if feature:
@@ -139,7 +139,17 @@ def locust(feature):
             if not volume_name:
                 raise ValueError("No volume or bind mount found mounted on /app")
 
-            run_docker_locust(volume_name, feature)
+            # Derive the network from the running web container instead of assuming
+            # one. Compose names it "<project>_uvlhub_network", and the project
+            # defaults to the directory holding the compose file ("docker") but is
+            # overridden by `docker compose -p <name>`, so a hardcoded name breaks
+            # as soon as anyone runs the stack under a different project.
+            networks = list(web_container.attrs["NetworkSettings"]["Networks"])
+            if not networks:
+                raise ValueError("Web container is not attached to any network")
+            network_name = networks[0]
+
+            run_docker_locust(volume_name, network_name, feature)
 
         except docker.errors.NotFound:
             click.echo(click.style("Web container not found.", fg="red"))
