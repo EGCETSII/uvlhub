@@ -4,7 +4,7 @@ from typing import Optional
 
 from flask_login import current_user
 from splent_framework.repositories.BaseRepository import BaseRepository
-from sqlalchemy import desc, func
+from sqlalchemy import desc
 
 from app.features.dataset.models import Author, DataSet, DOIMapping, DSDownloadRecord, DSMetaData, DSViewRecord
 
@@ -21,8 +21,7 @@ class DSDownloadRecordRepository(BaseRepository):
         super().__init__(DSDownloadRecord)
 
     def total_dataset_downloads(self) -> int:
-        max_id = self.model.query.with_entities(func.max(self.model.id)).scalar()
-        return max_id if max_id is not None else 0
+        return self.model.query.count()
 
     def find_by_user_dataset_cookie(self, user_id, dataset_id: int, cookie: str):
         return self.model.query.filter_by(user_id=user_id, dataset_id=dataset_id, download_cookie=cookie).first()
@@ -41,8 +40,7 @@ class DSViewRecordRepository(BaseRepository):
         super().__init__(DSViewRecord)
 
     def total_dataset_views(self) -> int:
-        max_id = self.model.query.with_entities(func.max(self.model.id)).scalar()
-        return max_id if max_id is not None else 0
+        return self.model.query.count()
 
     def the_record_exists(self, dataset: DataSet, user_cookie: str):
         return self.model.query.filter_by(

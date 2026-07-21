@@ -6,7 +6,7 @@ from app import db
 from app.features.auth.models import User
 from app.features.dataset.models import DataSet, DSMetaData, PublicationType
 from app.features.featuremodel.models import FeatureModel, FMMetaData
-from app.features.featuremodel.services import FeatureModelService
+from app.features.featuremodel.services import FeatureModelService, FMMetaDataService
 from app.features.hubfile.models import Hubfile, HubfileDownloadRecord, HubfileViewRecord
 
 pytestmark = pytest.mark.service
@@ -58,6 +58,14 @@ def test_count_feature_models_reflects_the_repository(test_app, clean_database):
         _make_feature_model("Smart Home")
         _make_feature_model("Car Configurator")
         assert FeatureModelService().count_feature_models() == 2
+
+
+def test_fm_meta_data_service_is_importable_at_module_level(test_app, clean_database):
+    with test_app.app_context():
+        service = FMMetaDataService()
+        assert service.count() == 0
+        _make_feature_model("Smart Home")
+        assert service.count() == 1
 
 
 def test_total_views_aggregates_hubfile_view_records(test_app, clean_database):

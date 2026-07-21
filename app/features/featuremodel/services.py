@@ -18,6 +18,7 @@ class FeatureModelService(BaseService):
     def count_feature_models(self):
         return self.repository.count_feature_models()
 
-    class FMMetaDataService(BaseService):
-        def __init__(self):
-            super().__init__(FMMetaDataRepository())
+
+class FMMetaDataService(BaseService):
+    def __init__(self):
+        super().__init__(FMMetaDataRepository())

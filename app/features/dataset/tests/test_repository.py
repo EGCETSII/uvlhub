@@ -149,8 +149,19 @@ def test_download_records_are_looked_up_by_user_dataset_and_cookie(test_app, cle
         assert repo.find_by_user_dataset_cookie(owner.id, dataset.id, "cookie-a") is not None
         assert repo.find_by_user_dataset_cookie(owner.id, dataset.id, "cookie-b") is None
         assert repo.find_by_user_dataset_cookie(None, dataset.id, "cookie-a") is None
-        # NB: the repository reports MAX(id), not COUNT(*).
-        assert repo.total_dataset_downloads() == record.id
+        assert repo.total_dataset_downloads() == 1
+
+        repo.create(
+            user_id=owner.id,
+            dataset_id=dataset.id,
+            download_date=datetime.now(timezone.utc),
+            download_cookie="cookie-b",
+        )
+        assert repo.total_dataset_downloads() == 2
+
+        # Deleting a row lowers the count even though the highest id survives.
+        repo.delete(record.id)
+        assert repo.total_dataset_downloads() == 1
 
 
 def test_total_dataset_views_tracks_created_records(test_app, clean_database):
@@ -171,5 +182,8 @@ def test_total_dataset_views_tracks_created_records(test_app, clean_database):
             for cookie in ("cookie-a", "cookie-b")
         ]
 
-        # NB: the repository reports MAX(id), not COUNT(*).
-        assert repo.total_dataset_views() == records[-1].id
+        assert repo.total_dataset_views() == 2
+
+        # Deleting a row lowers the count even though the highest id survives.
+        repo.delete(records[0].id)
+        assert repo.total_dataset_views() == 1

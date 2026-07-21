@@ -52,8 +52,7 @@ def test_count_feature_models_grows_with_each_created_model(test_app, clean_data
         assert FeatureModelRepository().count_feature_models() == 2
 
 
-def test_count_feature_models_tracks_max_id_not_row_count(test_app, clean_database):
-    """Known bug: count_feature_models() returns MAX(id), so deletions do not lower it."""
+def test_count_feature_models_drops_when_a_model_is_deleted(test_app, clean_database):
     with test_app.app_context():
         dataset = _make_dataset()
         first = _make_feature_model(dataset, "Smart Home")
@@ -62,7 +61,7 @@ def test_count_feature_models_tracks_max_id_not_row_count(test_app, clean_databa
         repository = FeatureModelRepository()
         assert repository.delete(first.id) is True
         assert repository.count() == 1
-        assert repository.count_feature_models() == 2
+        assert repository.count_feature_models() == 1
 
 
 def test_created_feature_model_is_linked_to_its_dataset_and_metadata(test_app, clean_database):

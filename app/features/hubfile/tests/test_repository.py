@@ -86,10 +86,15 @@ def test_total_hubfile_views_counts_stored_records(test_app, clean_database):
     with test_app.app_context():
         user, _, hubfile = _make_hubfile()
         repo = HubfileViewRecordRepository()
-        for cookie in ("c1", "c2", "c3"):
-            repo.create(user_id=user.id, file_id=hubfile.id, view_cookie=cookie)
+        records = [
+            repo.create(user_id=user.id, file_id=hubfile.id, view_cookie=cookie) for cookie in ("c1", "c2", "c3")
+        ]
 
         assert repo.total_hubfile_views() == 3
+
+        # Deleting a record with a non-maximal id lowers the total: it is a real row count, not MAX(id).
+        assert repo.delete(records[0].id) is True
+        assert repo.total_hubfile_views() == 2
 
 
 def test_view_record_lookup_matches_on_user_file_and_cookie(test_app, clean_database):
@@ -107,7 +112,7 @@ def test_download_record_lookup_distinguishes_anonymous_records(test_app, clean_
     with test_app.app_context():
         user, _, hubfile = _make_hubfile()
         repo = HubfileDownloadRecordRepository()
-        repo.create(user_id=user.id, file_id=hubfile.id, download_cookie="shared-cookie")
+        owned = repo.create(user_id=user.id, file_id=hubfile.id, download_cookie="shared-cookie")
         anonymous = repo.create(user_id=None, file_id=hubfile.id, download_cookie="shared-cookie")
 
         found = repo.find_by_user_file_cookie(None, hubfile.id, "shared-cookie")
@@ -116,3 +121,7 @@ def test_download_record_lookup_distinguishes_anonymous_records(test_app, clean_
         assert found.id == anonymous.id
         assert found.user_id is None
         assert repo.total_hubfile_downloads() == 2
+
+        # Deleting a record with a non-maximal id lowers the total: it is a real row count, not MAX(id).
+        assert repo.delete(owned.id) is True
+        assert repo.total_hubfile_downloads() == 1

@@ -105,6 +105,31 @@ def test_index_lists_only_synchronized_datasets(test_app, test_client):
     assert html.index("Beta models") < html.index("Alpha models")
 
 
+def test_index_renders_a_synchronized_dataset_without_tags(test_app, test_client):
+    """A synchronized dataset whose metadata has NULL tags must not break the landing page."""
+    with test_app.app_context():
+        user = User(email="tagless@example.com", password="ownerpass")
+        db.session.add(user)
+        db.session.commit()
+
+        meta = DSMetaData(
+            title="Tagless models",
+            description="A synchronized dataset without tags",
+            publication_type=PublicationType.NONE,
+            dataset_doi="10.1234/tagless",
+            tags=None,
+        )
+        db.session.add(meta)
+        db.session.commit()
+
+        db.session.add(DataSet(user_id=user.id, ds_meta_data_id=meta.id))
+        db.session.commit()
+
+    response = test_client.get("/")
+    assert response.status_code == 200
+    assert "Tagless models" in response.get_data(as_text=True)
+
+
 def test_index_is_available_to_anonymous_visitors(test_client):
     response = test_client.get("/", follow_redirects=False)
     assert response.status_code == 200

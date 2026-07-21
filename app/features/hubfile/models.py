@@ -30,7 +30,7 @@ class Hubfile(db.Model):
 
         return HubfileService().get_dataset_by_hubfile(self)
 
-    def get_path(self) -> DataSet:
+    def get_path(self) -> str:
         from app.features.hubfile.services import HubfileService
 
         return HubfileService().get_path_by_hubfile(self)

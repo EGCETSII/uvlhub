@@ -77,9 +77,6 @@ class DataSetService(BaseService):
     def count_synchronized_datasets(self):
         return self.repository.count_synchronized_datasets()
 
-    def count_feature_models(self):
-        return self.feature_model_service.count_feature_models()
-
     def count_authors(self) -> int:
         return self.author_repository.count()
 
@@ -240,7 +237,8 @@ class DataSetService(BaseService):
         import tempfile
         from zipfile import ZipFile
 
-        source_dir = f"uploads/user_{dataset.user_id}/dataset_{dataset.id}/"
+        working_dir = os.getenv("WORKING_DIR", "")
+        source_dir = os.path.join(working_dir, "uploads", f"user_{dataset.user_id}", f"dataset_{dataset.id}")
         tmp_dir = tempfile.mkdtemp()
         zip_name = f"dataset_{dataset.id}.zip"
         zip_path = os.path.join(tmp_dir, zip_name)

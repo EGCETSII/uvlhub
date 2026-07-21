@@ -20,8 +20,7 @@ def test_fm_meta_data_repr_uses_its_title():
         description="A smart home feature model",
         publication_type=PublicationType.JOURNAL_ARTICLE,
     )
-    # NOTE: the model's __repr__ never closes the angle bracket; pinned as-is.
-    assert repr(meta_data) == "FMMetaData<Smart Home"
+    assert repr(meta_data) == "FMMetaData<Smart Home>"
 
 
 def test_fm_metrics_repr_reports_both_solver_counts():

@@ -21,10 +21,10 @@ def download_file(file_id):
     directory = hubfile_service.directory_for(hubfile)
 
     cookie = request.cookies.get("file_download_cookie") or str(uuid.uuid4())
-    hubfile_download_record_service.record_download(current_user, file_id, cookie)
 
     resp = make_response(send_from_directory(directory=directory, path=hubfile.name, as_attachment=True))
-    resp.set_cookie("file_download_cookie", cookie)
+    hubfile_download_record_service.record_download(current_user, file_id, cookie)
+    resp.set_cookie("file_download_cookie", cookie, max_age=60 * 60 * 24 * 365 * 2)
     return resp
 
 

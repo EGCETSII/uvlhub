@@ -189,7 +189,7 @@ def test_delete_temp_file_removes_an_uploaded_file(test_app, clean_database, mon
 
 
 def test_build_download_archive_zips_the_dataset_upload_folder(test_app, clean_database, monkeypatch, tmp_path):
-    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("WORKING_DIR", str(tmp_path))
     with test_app.app_context():
         owner = _make_user("owner@example.com")
         dataset = _make_dataset(owner, title="Zippable")
@@ -209,7 +209,7 @@ def test_build_download_archive_zips_the_dataset_upload_folder(test_app, clean_d
 def test_build_download_archive_yields_an_empty_zip_when_nothing_was_uploaded(
     test_app, clean_database, monkeypatch, tmp_path
 ):
-    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("WORKING_DIR", str(tmp_path))
     with test_app.app_context():
         owner = _make_user("owner@example.com")
         dataset = _make_dataset(owner, title="Empty")

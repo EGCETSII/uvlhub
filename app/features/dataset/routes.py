@@ -70,6 +70,7 @@ def upload():
 
 
 @dataset_bp.route("/dataset/file/delete", methods=["POST"])
+@login_required
 def delete():
     filename = (request.get_json() or {}).get("file")
     result = dataset_service.delete_temp_file(filename, current_user)

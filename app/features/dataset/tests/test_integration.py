@@ -30,14 +30,14 @@ def _signup(test_client, email="owner@example.com", password="ownerpass"):
         return UserRepository().get_by_email(email).id
 
 
-def _make_dataset(user_id, title="Sample dataset", doi=None):
+def _make_dataset(user_id, title="Sample dataset", doi=None, tags="tag1,tag2"):
     meta = DSMetaDataRepository().create(
         title=title,
         description=f"Description for {title}",
         publication_type=PublicationType.DATA_MANAGEMENT_PLAN,
         dataset_doi=doi,
         deposition_id=7,
-        tags="tag1,tag2",
+        tags=tags,
     )
     return DataSetRepository().create(
         user_id=user_id,
@@ -115,6 +115,18 @@ def test_doi_landing_page_renders_the_dataset_and_sets_a_view_cookie(test_client
     assert "view_cookie" in response.headers.get("Set-Cookie", "")
 
 
+def test_doi_landing_page_renders_a_dataset_without_tags(test_client):
+    user_id = _signup(test_client)
+    with test_client.application.app_context():
+        _make_dataset(user_id, title="Untagged dataset", doi="10.1234/untagged", tags=None)
+
+    response = test_client.get("/doi/10.1234/untagged/")
+    body = response.get_data(as_text=True)
+
+    assert response.status_code == 200
+    assert "Untagged dataset" in body
+
+
 def test_doi_landing_page_redirects_a_superseded_doi(test_client):
     user_id = _signup(test_client)
     with test_client.application.app_context():
@@ -177,6 +189,13 @@ def test_temp_uvl_file_can_be_uploaded_and_then_deleted(test_client, monkeypatch
     missing = test_client.post("/dataset/file/delete", json={"file": filename})
     assert missing.status_code == 404
     assert missing.get_json()["error"] == "Error: File not found"
+
+
+def test_temp_file_delete_redirects_anonymous_visitors_to_login(test_client):
+    response = test_client.post("/dataset/file/delete", json={"file": "model.uvl"}, follow_redirects=False)
+
+    assert response.status_code == 302
+    assert "/login" in response.headers["Location"]
 
 
 def test_api_lists_every_dataset_with_its_files(test_client):

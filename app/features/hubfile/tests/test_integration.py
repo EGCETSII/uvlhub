@@ -134,7 +134,10 @@ def test_download_file_serves_the_file_as_an_attachment(test_client, monkeypatch
     assert response.data.decode() == UVL_CONTENT
     assert "attachment" in response.headers["Content-Disposition"]
     assert "model.uvl" in response.headers["Content-Disposition"]
-    assert "file_download_cookie" in response.headers.get("Set-Cookie", "")
+    set_cookie = response.headers.get("Set-Cookie", "")
+    assert "file_download_cookie" in set_cookie
+    # The download cookie persists for two years, matching the view cookie's lifetime.
+    assert "Max-Age=63072000" in set_cookie
 
 
 def test_download_file_records_the_download_once_per_cookie(test_client, monkeypatch, tmp_path):
@@ -156,6 +159,18 @@ def test_download_file_returns_404_for_an_unknown_id(test_client, monkeypatch, t
     monkeypatch.setenv("WORKING_DIR", str(tmp_path))
     response = test_client.get("/file/download/999999")
     assert response.status_code == 404
+
+
+def test_download_missing_from_disk_is_404_and_records_nothing(test_client, monkeypatch, tmp_path):
+    monkeypatch.setenv("WORKING_DIR", str(tmp_path))
+    with test_client.application.app_context():
+        _, _, file_id = _make_hubfile(name="never_written.uvl")
+
+    response = test_client.get(f"/file/download/{file_id}")
+
+    assert response.status_code == 404
+    with test_client.application.app_context():
+        assert HubfileDownloadRecordRepository().get_by_column("file_id", file_id) == []
 
 
 def test_download_attributes_the_record_to_the_logged_in_user(test_client, monkeypatch, tmp_path):

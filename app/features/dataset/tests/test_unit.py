@@ -66,6 +66,12 @@ def test_get_zenodo_url_is_none_without_a_dataset_doi():
     assert DataSet.get_zenodo_url(dataset) is None
 
 
+def test_get_zenodo_url_is_none_without_a_deposition_id():
+    dataset = SimpleNamespace(ds_meta_data=SimpleNamespace(deposition_id=None, dataset_doi="10.1234/dataset1"))
+
+    assert DataSet.get_zenodo_url(dataset) is None
+
+
 def test_get_zenodo_url_points_at_the_deposition_record():
     dataset = SimpleNamespace(ds_meta_data=SimpleNamespace(deposition_id=42, dataset_doi="10.1234/dataset1"))
 

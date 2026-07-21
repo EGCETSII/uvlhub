@@ -31,7 +31,7 @@ class FMMetaData(db.Model):
     )
 
     def __repr__(self):
-        return f"FMMetaData<{self.title}"
+        return f"FMMetaData<{self.title}>"
 
 
 class FMMetrics(db.Model):
