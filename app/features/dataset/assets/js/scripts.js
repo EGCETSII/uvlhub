@@ -82,11 +82,15 @@ var currentId = 0;
         }
 
 
-        document.getElementById('add_author').addEventListener('click', function () {
-            let authors = document.getElementById('authors');
-            let newAuthor = createAuthorBlock(amount_authors++, "");
-            authors.appendChild(newAuthor);
-        });
+        // Guarded: the asset registry serves this file on every page, and the
+        // upload form only exists on /dataset/upload.
+        if (document.getElementById('add_author')) {
+            document.getElementById('add_author').addEventListener('click', function () {
+                let authors = document.getElementById('authors');
+                let newAuthor = createAuthorBlock(amount_authors++, "");
+                authors.appendChild(newAuthor);
+            });
+        }
 
 
         document.addEventListener('click', function (event) {
@@ -129,6 +133,10 @@ var currentId = 0;
         }
 
         window.onload = function () {
+
+            // Everything below wires the upload form, which only exists on
+            // /dataset/upload. The asset registry loads this file everywhere.
+            if (!document.getElementById('upload_button')) return;
 
             test_zenodo_connection();
 

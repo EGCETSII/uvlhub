@@ -1,4 +1,11 @@
+// The whole file is inert outside /explore: the asset registry serves it on
+// every page, so each entry point checks for the search form first.
+function on_explore_page() {
+    return document.getElementById('filters') !== null;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    if (!on_explore_page()) return;
     send_query();
 });
 
@@ -158,7 +165,11 @@ function set_publication_type_as_query(publicationType) {
     publicationTypeSelect.dispatchEvent(new Event('input', {bubbles: true}));
 }
 
-document.getElementById('clear-filters').addEventListener('click', clearFilters);
+// Guarded: the asset registry serves every feature's script on every page, so
+// this file also loads where the explore form does not exist.
+if (document.getElementById('clear-filters')) {
+    document.getElementById('clear-filters').addEventListener('click', clearFilters);
+}
 
 function clearFilters() {
 
@@ -185,8 +196,7 @@ function clearFilters() {
 
 document.addEventListener('DOMContentLoaded', () => {
 
-    //let queryInput = document.querySelector('#query');
-    //queryInput.dispatchEvent(new Event('input', {bubbles: true}));
+    if (!on_explore_page()) return;
 
     let urlParams = new URLSearchParams(window.location.search);
     let queryParam = urlParams.get('query');

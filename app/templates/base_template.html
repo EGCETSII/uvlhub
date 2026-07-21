@@ -301,6 +301,14 @@ Romero-Organvidez, D., Galindo, J. A., Sundermann, C., Horcas, J.-M., & Benavide
 
 </script>
 
+{# Feature scripts come from splent_framework's asset registry: each feature
+   declares its file in init_feature() with register_asset(), and they are
+   emitted here deduplicated and ordered. Do not add per-feature <script> tags
+   to feature templates. #}
+{% for asset in get_assets("js") %}
+<script src="{{ asset }}"></script>
+{% endfor %}
+
 {% block scripts %}{% endblock %}
 
 </body>
