@@ -92,6 +92,46 @@ def test_edit_page_renders_form_fields(test_client):
     assert 'name="orcid"' in body
 
 
+def test_edit_form_is_prefilled_with_stored_profile(test_app, test_client):
+    signup(test_client, email="prefilled@example.com", name="Ada", surname="Lovelace")
+    with test_app.app_context():
+        repo = UserProfileRepository()
+        profile = repo.get_by_column("user_id", 1)[0]
+        repo.update(profile.id, orcid="0000-0001-2345-6789", affiliation="Analytical Engine Lab")
+
+    response = test_client.get("/profile/edit")
+
+    assert response.status_code == 200
+    body = response.get_data(as_text=True)
+    assert 'value="Ada"' in body
+    assert 'value="Lovelace"' in body
+    assert 'value="0000-0001-2345-6789"' in body
+    assert 'value="Analytical Engine Lab"' in body
+
+
+def test_edit_partial_post_preserves_fields_left_out_of_the_form(test_app, test_client):
+    signup(test_client, email="partialedit@example.com", name="Ada", surname="Lovelace")
+    with test_app.app_context():
+        repo = UserProfileRepository()
+        profile = repo.get_by_column("user_id", 1)[0]
+        repo.update(profile.id, orcid="0000-0001-2345-6789", affiliation="Analytical Engine Lab")
+
+    response = test_client.post(
+        "/profile/edit",
+        data={"name": "Augusta", "surname": "King"},
+        follow_redirects=False,
+    )
+
+    assert response.status_code in (302, 303)
+    with test_app.app_context():
+        profile = UserProfileRepository().get_by_column("user_id", 1)[0]
+        assert profile.name == "Augusta"
+        assert profile.surname == "King"
+        # Fields absent from the submitted data keep their stored values.
+        assert profile.orcid == "0000-0001-2345-6789"
+        assert profile.affiliation == "Analytical Engine Lab"
+
+
 def test_edit_post_updates_profile_and_redirects(test_app, test_client):
     signup(test_client, email="editpost@example.com", name="Ada", surname="Lovelace")
 

@@ -5,13 +5,17 @@ from app.features.profile.repositories import UserProfileRepository
 
 
 class UserProfileService(BaseService):
+    #: Form fields that do not exist on the UserProfile model.
+    NON_MODEL_FIELDS = ("submit", "csrf_token")
+
     def __init__(self):
         super().__init__(UserProfileRepository())
         self._datasets = DataSetRepository()
 
     def update_profile(self, user_profile_id, form):
         if form.validate():
-            updated_instance = self.update(user_profile_id, **form.data)
+            updates = {key: value for key, value in form.data.items() if key not in self.NON_MODEL_FIELDS}
+            updated_instance = self.update(user_profile_id, **updates)
             return updated_instance, None
 
         return None, form.errors

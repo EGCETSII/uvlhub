@@ -17,7 +17,7 @@ TOKEN = "test-webhook-token"
 def deploy_calls(monkeypatch):
     """Neutralise the deploy side effect and record how often it is invoked."""
     calls = []
-    monkeypatch.setattr(webhook_routes, "WEBHOOK_TOKEN", TOKEN)
+    monkeypatch.setenv("WEBHOOK_TOKEN", TOKEN)
     monkeypatch.setattr(webhook_routes.webhook_service, "deploy", lambda: calls.append(True))
     return calls
 
@@ -51,6 +51,35 @@ def test_deploy_with_valid_token_runs_deployment(test_client, deploy_calls):
     assert deploy_calls == [True]
 
 
+def test_deploy_refuses_when_token_is_unset(test_client, deploy_calls, monkeypatch):
+    monkeypatch.delenv("WEBHOOK_TOKEN", raising=False)
+
+    response = test_client.post("/webhook/deploy", headers={"Authorization": "Bearer any-token"})
+
+    assert response.status_code == 503
+    assert "error" in response.get_json()
+    assert deploy_calls == []
+
+
+def test_deploy_refuses_when_token_is_empty(test_client, deploy_calls, monkeypatch):
+    monkeypatch.setenv("WEBHOOK_TOKEN", "")
+
+    response = test_client.post("/webhook/deploy", headers={"Authorization": "Bearer "})
+
+    assert response.status_code == 503
+    assert "error" in response.get_json()
+    assert deploy_calls == []
+
+
+def test_deploy_with_literal_bearer_none_never_matches_an_unset_token(test_client, deploy_calls, monkeypatch):
+    monkeypatch.delenv("WEBHOOK_TOKEN", raising=False)
+
+    response = test_client.post("/webhook/deploy", headers={"Authorization": "Bearer None"})
+
+    assert response.status_code == 503
+    assert deploy_calls == []
+
+
 def test_deploy_rejects_get_requests(test_client, deploy_calls):
     response = test_client.get("/webhook/deploy", headers={"Authorization": f"Bearer {TOKEN}"})
 
@@ -64,7 +93,7 @@ def test_deploy_failure_surfaces_as_error_response(test_client, monkeypatch):
 
         abort(500, description="Container command failed")
 
-    monkeypatch.setattr(webhook_routes, "WEBHOOK_TOKEN", TOKEN)
+    monkeypatch.setenv("WEBHOOK_TOKEN", TOKEN)
     monkeypatch.setattr(webhook_routes.webhook_service, "deploy", boom)
 
     response = test_client.post("/webhook/deploy", headers={"Authorization": f"Bearer {TOKEN}"})

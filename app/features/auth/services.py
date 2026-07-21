@@ -57,13 +57,6 @@ class AuthenticationService(BaseService):
             raise exc
         return user
 
-    def update_profile(self, user_profile_id, form):
-        if form.validate():
-            updated_instance = self.update(user_profile_id, **form.data)
-            return updated_instance, None
-
-        return None, form.errors
-
     def get_authenticated_user(self) -> User | None:
         if current_user.is_authenticated:
             return current_user

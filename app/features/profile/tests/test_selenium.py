@@ -66,6 +66,20 @@ def _edit_field_values(driver):
     }
 
 
+def _submit_when_settled(driver):
+    """Click submit only once the page has fully settled.
+
+    The shell loads every feature's script plus CDN assets on each page, and a
+    click dispatched mid-layout can land beside the button and silently do
+    nothing: the POST never happens and the test times out waiting for the
+    flash. Waiting for readyState complete pins the layout first.
+    """
+    WebDriverWait(driver, 15).until(lambda d: d.execute_script("return document.readyState") == "complete")
+    button = driver.find_element(By.ID, "submit")
+    driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", button)
+    button.click()
+
+
 @pytest.mark.parametrize("path", ["/profile/summary", "/profile/edit"])
 def test_profile_pages_send_anonymous_visitors_to_the_login_form(path):
     driver = initialize_driver()
@@ -178,7 +192,7 @@ def test_saving_the_unchanged_profile_confirms_success_and_keeps_the_values():
 
         WebDriverWait(driver, 15).until(EC.presence_of_element_located((By.NAME, "name")))
         before = _edit_field_values(driver)
-        driver.find_element(By.ID, "submit").click()
+        _submit_when_settled(driver)
 
         alert = WebDriverWait(driver, 15).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, "div.alert-success")),
@@ -209,7 +223,7 @@ def test_edit_rejects_a_malformed_orcid_without_touching_the_profile():
         orcid = driver.find_element(By.NAME, "orcid")
         orcid.clear()
         orcid.send_keys("not-an-orcid")
-        driver.find_element(By.ID, "submit").click()
+        _submit_when_settled(driver)
 
         WebDriverWait(driver, 15).until(EC.presence_of_element_located((By.NAME, "orcid")))
         errors = [element.text.strip() for element in driver.find_elements(By.CSS_SELECTOR, "form span")]

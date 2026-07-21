@@ -18,7 +18,9 @@ def edit_profile():
     if not profile:
         return redirect(url_for("public.index"))
 
-    form = UserProfileForm()
+    # obj=profile prefills the form on GET; on POST it backfills any field
+    # absent from the submitted data, so a partial edit keeps stored values.
+    form = UserProfileForm(obj=profile)
     if request.method == "POST":
         result, errors = user_profile_service.update_profile(profile.id, form)
         if errors:

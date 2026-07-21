@@ -38,16 +38,20 @@ def test_optional_profile_fields_default_to_none():
     assert profile.affiliation is None
 
 
-def test_update_profile_delegates_form_data_to_repository():
+def test_update_profile_delegates_only_model_fields_to_repository():
     service = make_service()
     updated = object()
     service.repository.update.return_value = updated
-    form = StubForm(valid=True, data={"name": "Ada", "surname": "Lovelace"})
+    form = StubForm(
+        valid=True,
+        data={"name": "Ada", "surname": "Lovelace", "submit": True, "csrf_token": "token"},
+    )
 
     instance, errors = service.update_profile(42, form)
 
     assert instance is updated
     assert errors is None
+    # submit and csrf_token are form-only fields and must never reach the model.
     service.repository.update.assert_called_once_with(42, name="Ada", surname="Lovelace")
 
 

@@ -122,6 +122,9 @@ def test_update_profile_persists_valid_form(test_app, test_client):
 
         assert errors is None
         assert updated.name == "Augusta"
+        # Form-only fields must not leak into the model instance via setattr.
+        assert not hasattr(updated, "submit")
+        assert not hasattr(updated, "csrf_token")
 
         reloaded = UserProfileRepository().get_by_id(profile.id)
         assert reloaded.surname == "King"
