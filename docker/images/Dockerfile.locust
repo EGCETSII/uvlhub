@@ -2,7 +2,7 @@ FROM python:3.13-slim
 
 WORKDIR /workspace
 
-RUN pip install --no-cache-dir locust python-dotenv faker bs4 splent_framework==1.6.1
+RUN pip install --no-cache-dir locust python-dotenv faker bs4 splent_framework==1.7.0
 
 ENV PYTHONPATH=/workspace
 
