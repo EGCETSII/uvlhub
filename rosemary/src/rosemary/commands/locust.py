@@ -65,11 +65,20 @@ def locust(feature):
             "-p",
             "8089:8089",
             "-v",
-            f"{volume_name}:/app",
+            # Mount where the image expects the code. Dockerfile.locust sets
+            # WORKDIR and PYTHONPATH to /workspace, and the -f path below is
+            # built from WORKING_DIR, which is /workspace/ in this container.
+            # Mounting on /app left locust unable to find any locustfile.
+            f"{volume_name}:/workspace",
             "--name",
             "locust_container",
             "--network",
             network_name,
+            # Without this the locustfiles resolve their target through
+            # get_host_for_locust_testing, which maps an unset WORKING_DIR to
+            # http://localhost:5000 and would point locust at itself.
+            "-e",
+            "WORKING_DIR=/workspace/",
             "locust-image",
         ]
         if feature:

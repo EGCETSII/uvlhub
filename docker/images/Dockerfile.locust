@@ -6,6 +6,13 @@ RUN pip install --no-cache-dir locust python-dotenv faker bs4 splent_framework==
 
 ENV PYTHONPATH=/workspace
 
-COPY --chmod=0755 docker/entrypoints/locust_entrypoint.sh /workspace/locust_entrypoint.sh
+# Two steps rather than COPY --chmod: that flag needs BuildKit, and the docker
+# CLI inside web_app_container ships without buildx, so `rosemary locust` could
+# not build this image at all.
+#
+# The script lives outside /workspace on purpose. The repository is bind-mounted
+# on /workspace at run time, which would shadow anything baked in there.
+COPY docker/entrypoints/locust_entrypoint.sh /usr/local/bin/locust_entrypoint.sh
+RUN chmod 0755 /usr/local/bin/locust_entrypoint.sh
 
-ENTRYPOINT ["/workspace/locust_entrypoint.sh"]
+ENTRYPOINT ["/usr/local/bin/locust_entrypoint.sh"]
