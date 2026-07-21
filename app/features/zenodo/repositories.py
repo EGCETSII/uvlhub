@@ -1,5 +1,6 @@
-from app.features.zenodo.models import Zenodo
 from splent_framework.repositories.BaseRepository import BaseRepository
+
+from app.features.zenodo.models import Zenodo
 
 
 class ZenodoRepository(BaseRepository):

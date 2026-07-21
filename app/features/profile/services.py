@@ -1,6 +1,7 @@
+from splent_framework.services.BaseService import BaseService
+
 from app.features.dataset.repositories import DataSetRepository
 from app.features.profile.repositories import UserProfileRepository
-from splent_framework.services.BaseService import BaseService
 
 
 class UserProfileService(BaseService):

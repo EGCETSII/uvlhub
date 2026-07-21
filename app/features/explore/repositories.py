@@ -1,11 +1,11 @@
 import re
 
 import unidecode
+from splent_framework.repositories.BaseRepository import BaseRepository
 from sqlalchemy import any_, or_
 
 from app.features.dataset.models import Author, DataSet, DSMetaData, PublicationType
 from app.features.featuremodel.models import FeatureModel, FMMetaData
-from splent_framework.repositories.BaseRepository import BaseRepository
 
 
 class ExploreRepository(BaseRepository):

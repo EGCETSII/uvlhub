@@ -6,6 +6,7 @@ import uuid
 from typing import Optional
 
 from flask import request
+from splent_framework.services.BaseService import BaseService
 
 from app.features.auth.services import AuthenticationService
 from app.features.dataset.models import DataSet, DSMetaData, DSViewRecord
@@ -23,7 +24,6 @@ from app.features.hubfile.repositories import (
     HubfileRepository,
     HubfileViewRecordRepository,
 )
-from splent_framework.services.BaseService import BaseService
 
 logger = logging.getLogger(__name__)
 

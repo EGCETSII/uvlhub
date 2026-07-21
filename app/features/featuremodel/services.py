@@ -1,6 +1,7 @@
+from splent_framework.services.BaseService import BaseService
+
 from app.features.featuremodel.repositories import FeatureModelRepository, FMMetaDataRepository
 from app.features.hubfile.services import HubfileService
-from splent_framework.services.BaseService import BaseService
 
 
 class FeatureModelService(BaseService):

@@ -1,6 +1,5 @@
 from flask import redirect, render_template, request, url_for
 from flask_login import current_user, login_required
-
 from splent_framework.utils.form_helpers import form_error, form_success
 
 from app.features.auth.services import AuthenticationService

@@ -1,13 +1,13 @@
 import os
 
 from flask_login import current_user, login_user
+from splent_framework.configuration.configuration import uploads_folder_name
+from splent_framework.services.BaseService import BaseService
 
 from app.features.auth.models import User
 from app.features.auth.repositories import UserRepository
 from app.features.profile.models import UserProfile
 from app.features.profile.repositories import UserProfileRepository
-from splent_framework.configuration.configuration import uploads_folder_name
-from splent_framework.services.BaseService import BaseService
 
 
 class AuthenticationService(BaseService):

@@ -2,7 +2,6 @@ import os
 import subprocess
 
 import click
-
 import splent_framework.selenium.common as driver_selector
 
 

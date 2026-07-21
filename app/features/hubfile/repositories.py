@@ -1,3 +1,4 @@
+from splent_framework.repositories.BaseRepository import BaseRepository
 from sqlalchemy import func
 
 from app import db
@@ -5,7 +6,6 @@ from app.features.auth.models import User
 from app.features.dataset.models import DataSet
 from app.features.featuremodel.models import FeatureModel
 from app.features.hubfile.models import Hubfile, HubfileDownloadRecord, HubfileViewRecord
-from splent_framework.repositories.BaseRepository import BaseRepository
 
 
 class HubfileRepository(BaseRepository):
@@ -35,9 +35,7 @@ class HubfileViewRecordRepository(BaseRepository):
         return max_id if max_id is not None else 0
 
     def find_by_user_file_cookie(self, user_id, file_id: int, cookie: str):
-        return self.model.query.filter_by(
-            user_id=user_id, file_id=file_id, view_cookie=cookie
-        ).first()
+        return self.model.query.filter_by(user_id=user_id, file_id=file_id, view_cookie=cookie).first()
 
 
 class HubfileDownloadRecordRepository(BaseRepository):
@@ -49,6 +47,4 @@ class HubfileDownloadRecordRepository(BaseRepository):
         return max_id if max_id is not None else 0
 
     def find_by_user_file_cookie(self, user_id, file_id: int, cookie: str):
-        return self.model.query.filter_by(
-            user_id=user_id, file_id=file_id, download_cookie=cookie
-        ).first()
+        return self.model.query.filter_by(user_id=user_id, file_id=file_id, download_cookie=cookie).first()

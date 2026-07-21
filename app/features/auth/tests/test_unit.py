@@ -1,4 +1,5 @@
 """Unit tests for the auth feature — pure logic, no Flask app, no DB."""
+
 import pytest
 
 from app.features.auth.models import User

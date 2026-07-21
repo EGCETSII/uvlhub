@@ -5,12 +5,12 @@ import requests
 from dotenv import load_dotenv
 from flask import Response, jsonify
 from flask_login import current_user
+from splent_framework.configuration.configuration import uploads_folder_name
+from splent_framework.services.BaseService import BaseService
 
 from app.features.dataset.models import DataSet
 from app.features.featuremodel.models import FeatureModel
 from app.features.zenodo.repositories import ZenodoRepository
-from splent_framework.configuration.configuration import uploads_folder_name
-from splent_framework.services.BaseService import BaseService
 
 logger = logging.getLogger(__name__)
 

@@ -1,5 +1,6 @@
-from app.features.webhook.models import Webhook
 from splent_framework.repositories.BaseRepository import BaseRepository
+
+from app.features.webhook.models import Webhook
 
 
 class WebhookRepository(BaseRepository):

@@ -20,9 +20,7 @@ class _UVLErrorListener(ErrorListener):
 
     def syntaxError(self, recognizer, offendingSymbol, line, column, msg, e):
         kind = "warning" if "\\t" in msg else "error"
-        self.errors.append(
-            f"The UVL has the following {kind} that prevents reading it: Line {line}:{column} - {msg}"
-        )
+        self.errors.append(f"The UVL has the following {kind} that prevents reading it: Line {line}:{column} - {msg}")
 
 
 # (writer class, tempfile suffix, download-name suffix). ``None`` writer means

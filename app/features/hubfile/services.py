@@ -1,5 +1,7 @@
 import os
 
+from splent_framework.services.BaseService import BaseService
+
 from app.features.auth.models import User
 from app.features.dataset.models import DataSet
 from app.features.hubfile.models import Hubfile
@@ -8,7 +10,6 @@ from app.features.hubfile.repositories import (
     HubfileRepository,
     HubfileViewRecordRepository,
 )
-from splent_framework.services.BaseService import BaseService
 
 
 class HubfileService(BaseService):

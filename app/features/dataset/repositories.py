@@ -3,10 +3,10 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from flask_login import current_user
+from splent_framework.repositories.BaseRepository import BaseRepository
 from sqlalchemy import desc, func
 
 from app.features.dataset.models import Author, DataSet, DOIMapping, DSDownloadRecord, DSMetaData, DSViewRecord
-from splent_framework.repositories.BaseRepository import BaseRepository
 
 logger = logging.getLogger(__name__)
 
@@ -25,9 +25,7 @@ class DSDownloadRecordRepository(BaseRepository):
         return max_id if max_id is not None else 0
 
     def find_by_user_dataset_cookie(self, user_id, dataset_id: int, cookie: str):
-        return self.model.query.filter_by(
-            user_id=user_id, dataset_id=dataset_id, download_cookie=cookie
-        ).first()
+        return self.model.query.filter_by(user_id=user_id, dataset_id=dataset_id, download_cookie=cookie).first()
 
 
 class DSMetaDataRepository(BaseRepository):

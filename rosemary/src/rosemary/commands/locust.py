@@ -96,6 +96,7 @@ def locust(feature):
             locustfile_path = os.path.join(features_dir, feature, "tests", "locustfile.py")
         else:
             from splent_framework.bootstraps import locustfile_bootstrap
+
             locustfile_path = locustfile_bootstrap.__file__
         locust_command = ["locust", "-f", locustfile_path]
         click.echo(f"Locust command: {' '.join(locust_command)}")

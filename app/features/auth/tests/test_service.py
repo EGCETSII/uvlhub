@@ -1,4 +1,5 @@
 """Service-level tests for auth — exercise services + repos with a real DB."""
+
 import pytest
 
 from app.features.auth.services import AuthenticationService

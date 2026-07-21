@@ -1,4 +1,5 @@
 """HTTP integration tests for auth via the Flask test client."""
+
 import pytest
 
 pytestmark = pytest.mark.integration

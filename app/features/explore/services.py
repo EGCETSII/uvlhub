@@ -1,5 +1,6 @@
-from app.features.explore.repositories import ExploreRepository
 from splent_framework.services.BaseService import BaseService
+
+from app.features.explore.repositories import ExploreRepository
 
 
 class ExploreService(BaseService):

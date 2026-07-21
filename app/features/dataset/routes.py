@@ -83,9 +83,7 @@ def download_dataset(dataset_id):
     tmp_dir, zip_name = dataset_service.build_download_archive(dataset)
 
     cookie = request.cookies.get("download_cookie") or str(uuid.uuid4())
-    resp = make_response(
-        send_from_directory(tmp_dir, zip_name, as_attachment=True, mimetype="application/zip")
-    )
+    resp = make_response(send_from_directory(tmp_dir, zip_name, as_attachment=True, mimetype="application/zip"))
     if not request.cookies.get("download_cookie"):
         resp.set_cookie("download_cookie", cookie)
 
