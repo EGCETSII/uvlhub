@@ -7,7 +7,18 @@ from splent_framework.services.BaseService import BaseService
 import docker
 from app.features.webhook.repositories import WebhookRepository
 
-client = docker.from_env()
+# Resolved on first use rather than at import. The plain production stack has
+# no Docker socket, and an import-time client made every app that loads this
+# feature require one just to boot; only the webhook deployment compose mounts
+# the socket. Tests inject a fake by assigning this module attribute directly.
+client = None
+
+
+def _docker_client():
+    global client
+    if client is None:
+        client = docker.from_env()
+    return client
 
 
 class WebhookService(BaseService):
@@ -16,7 +27,7 @@ class WebhookService(BaseService):
 
     def get_web_container(self):
         try:
-            return client.containers.get("web_app_container")
+            return _docker_client().containers.get("web_app_container")
         except docker.errors.NotFound:
             abort(404, description="Web container not found.")
 
