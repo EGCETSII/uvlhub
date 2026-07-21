@@ -86,7 +86,9 @@ def download_dataset(dataset_id):
     cookie = request.cookies.get("download_cookie") or str(uuid.uuid4())
     resp = make_response(send_from_directory(tmp_dir, zip_name, as_attachment=True, mimetype="application/zip"))
     if not request.cookies.get("download_cookie"):
-        resp.set_cookie("download_cookie", cookie)
+        # Two years, matching hubfile: a session cookie made the download
+        # dedupe reset whenever the browser closed.
+        resp.set_cookie("download_cookie", cookie, max_age=60 * 60 * 24 * 365 * 2)
 
     DSDownloadRecordService().record_download(current_user, dataset_id, cookie)
     return resp
@@ -113,7 +115,7 @@ def subdomain_index(doi):
     # Save the cookie to the user's browser
     user_cookie = ds_view_record_service.create_cookie(dataset=dataset)
     resp = make_response(render_template("dataset/view_dataset.html", dataset=dataset))
-    resp.set_cookie("view_cookie", user_cookie)
+    resp.set_cookie("view_cookie", user_cookie, max_age=60 * 60 * 24 * 365 * 2)
 
     return resp
 
