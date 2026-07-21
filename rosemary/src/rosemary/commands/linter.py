@@ -1,5 +1,6 @@
 import os
 import subprocess
+import sys
 
 import click
 
@@ -14,16 +15,24 @@ def linter():
         os.path.join(working_dir, "rosemary"),
     ]
 
-    # Run flake8 in each directory
+    # No --config: flake8 reads INI with configparser, so pointing it at a TOML
+    # file made it die with "Source contains parsing errors: 'pyproject.toml'".
+    # flake8-pyproject already discovers [tool.flake8] there on its own.
+    failed = False
     for directory in directories:
         click.echo(f"Running flake8 on {directory}...")
-        result = subprocess.run(["flake8", "--config=pyproject.toml", directory])
+        result = subprocess.run(["flake8", directory])
 
         # Check if flake8 encountered problems
         if result.returncode != 0:
+            failed = True
             click.echo(click.style(f"flake8 found issues in {directory}.", fg="red"))
         else:
-            click.echo(click.style(f"No issues found in {directory}. Congratulations!", fg="green"))
+            click.echo(click.style(f"No issues found in {directory}.", fg="green"))
+
+    # Exit non-zero so the command is usable as a gate in a script or hook.
+    if failed:
+        sys.exit(1)
 
 
 @click.command(
@@ -31,11 +40,6 @@ def linter():
     help="Automatically formats and cleans code in 'app' and 'rosemary' directories.",
 )
 def linter_fix():
-    import os
-    import subprocess
-
-    import click
-
     working_dir = os.getenv("WORKING_DIR", "")
     directories = [
         os.path.join(working_dir, "app"),
@@ -66,4 +70,4 @@ def linter_fix():
         if result.returncode != 0:
             click.echo(click.style(f"Failed on {directory}", fg="red"))
         else:
-            click.echo(click.style(f"✔ {directory} cleaned & formatted", fg="green"))
+            click.echo(click.style(f"{directory} cleaned and formatted", fg="green"))
