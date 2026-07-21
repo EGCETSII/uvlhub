@@ -2,7 +2,6 @@ import os
 import subprocess
 
 import click
-import splent_framework.selenium.common as driver_selector
 
 
 @click.command("selenium", help="Executes Selenium tests based on the environment (local, Docker, or Vagrant).")
@@ -18,7 +17,11 @@ def selenium(feature, driver):
     try:
         working_dir = os.getenv("WORKING_DIR", "")
         features_dir = os.path.join(working_dir, "app/features")
-        driver_selector.set_service_driver(driver)
+
+        # tests/selenium_support.initialize_driver reads this. The framework's
+        # selenium.common has no set_service_driver to call, despite what
+        # earlier versions of this command assumed.
+        os.environ["SELENIUM_BROWSER"] = driver.lower()
 
         def validate_feature(feature_name):
             if not feature_name:
@@ -44,8 +47,13 @@ def selenium(feature, driver):
 
         def run_selenium_tests(feature_name, env="local"):
             test_paths = collect_test_paths(feature_name)
-            base_cmd = "pytest" if env == "docker" else "python"
-            cmd = [base_cmd] + test_paths
+            if not test_paths:
+                click.echo(click.style("No selenium tests found.", fg="yellow"))
+                return
+            # Always pytest: the e2e files are marker-tagged test modules, not
+            # scripts that call themselves on import the way the pre-refactor
+            # ones did, so `python <file>` would silently run nothing.
+            cmd = ["pytest", "-v", "-m", "e2e"] + test_paths
 
             env_label = "Docker (Selenium Grid)" if env == "docker" else "local environment"
             click.echo(click.style(f"Running Selenium tests in {env_label}...", fg="cyan"))
@@ -84,5 +92,3 @@ def selenium(feature, driver):
         pass
     except Exception as e:
         click.echo(click.style(f"Unexpected error: {e}", fg="red"))
-    finally:
-        driver_selector.set_service_driver("firefox")
