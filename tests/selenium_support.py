@@ -1,72 +1,40 @@
 """Driver and host resolution for the e2e layer.
 
-This exists because ``splent_framework.selenium.common`` cannot drive the
-Selenium Grid that ``docker/docker-compose.dev.yml`` starts. Its
-``initialize_driver`` builds a *local* Chrome through ``webdriver_manager``,
-and there is no browser installed inside ``web_app_container``, so every e2e
-test raises before it reaches the app. The framework also exports no
-``set_service_driver``, though ``rosemary selenium`` calls it.
+Since splent_framework 1.7.1 the framework itself can drive a Selenium Grid:
+``initialize_driver`` attaches to ``SELENIUM_GRID_URL`` over
+``webdriver.Remote``, and ``get_host_for_selenium_testing`` honours
+``SELENIUM_TARGET_URL``. This module is now a thin product-level wrapper that
+supplies uvlhub's defaults and its deterministic viewport, so the ten e2e
+files keep a single import point.
 
-Until splent_framework grows grid support, uvlhub resolves its own driver
-here. Drop this module and go back to the framework helpers once it does.
+What it adds on top of the framework helpers:
 
-Two things differ from the framework version:
-
-* the driver is a ``webdriver.Remote`` pointed at the grid, so the browser
-  runs in the selenium-chrome / selenium-firefox container;
-* the host is the nginx container, not ``localhost``. ``localhost`` is
-  resolved *by the browser*, and inside the browser container that is the
-  browser itself. ``get_host_for_locust_testing`` already gets this right;
-  ``get_host_for_selenium_testing`` does not.
+* Defaults for the grid and target URLs matching the container names that
+  ``docker/docker-compose.dev.yml`` fixes, applied only under Docker and only
+  when the variables are not already set.
+* A pinned 1920x1080 window. Chrome nodes open at about 945px and firefox at
+  about 1280px, and below the responsive breakpoint the sidebar collapses
+  off-canvas, so an unpinned viewport makes the same test pass on one browser
+  and fail on the other.
 """
 
 import os
 
-from selenium import webdriver
+from splent_framework.environment.host import get_host_for_selenium_testing
+from splent_framework.selenium.common import close_driver
+from splent_framework.selenium.common import initialize_driver as _framework_driver
+
+__all__ = ["close_driver", "get_host_for_selenium_testing", "initialize_driver"]
 
 # Explicit container_name entries in the compose file, so these hold whatever
-# project name the stack is brought up under.
-GRID_URL = os.getenv("SELENIUM_GRID_URL", "http://selenium_hub_container:4444")
-DOCKER_HOST_URL = os.getenv("SELENIUM_TARGET_URL", "http://nginx_web_server_container")
-LOCAL_HOST_URL = "http://localhost:5000"
-
-
-def get_host_for_selenium_testing() -> str:
-    """URL of the app *as the browser sees it*."""
-    return DOCKER_HOST_URL if os.getenv("WORKING_DIR", "") == "/workspace/" else LOCAL_HOST_URL
-
-
-def _options_for(browser: str):
-    if browser == "firefox":
-        return webdriver.FirefoxOptions()
-    return webdriver.ChromeOptions()
+# project name the stack is brought up under. Only defaulted in Docker: a
+# local run without a grid should keep launching a local browser.
+if os.getenv("WORKING_DIR", "") == "/workspace/":
+    os.environ.setdefault("SELENIUM_GRID_URL", "http://selenium_hub_container:4444")
+    os.environ.setdefault("SELENIUM_TARGET_URL", "http://nginx_web_server_container")
 
 
 def initialize_driver(browser: str | None = None):
-    """Return a driver attached to the grid, or a local one outside Docker.
-
-    ``browser`` defaults to $SELENIUM_BROWSER, which ``rosemary selenium``
-    sets from its ``--driver`` flag.
-    """
-    browser = (browser or os.getenv("SELENIUM_BROWSER") or "chrome").lower()
-
-    if os.getenv("WORKING_DIR", "") == "/workspace/":
-        driver = webdriver.Remote(command_executor=GRID_URL, options=_options_for(browser))
-    elif browser == "firefox":
-        driver = webdriver.Firefox()
-    else:
-        driver = webdriver.Chrome()
-
-    # Deterministic viewport. Browser defaults differ (chrome nodes open at
-    # ~945px, firefox at ~1280px), and below the responsive breakpoint the
-    # sidebar collapses off-canvas, so the same test can pass on one browser
-    # and fail on the other with an off-screen click target.
+    driver = _framework_driver(browser)
     driver.set_window_size(1920, 1080)
-    driver.set_page_load_timeout(30)
-    driver.implicitly_wait(10)
     return driver
-
-
-def close_driver(driver):
-    if driver is not None:
-        driver.quit()
