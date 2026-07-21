@@ -52,24 +52,18 @@ chico sundermann">
                     Datasets
                 </li>
 
-                <li class="sidebar-item {{ 'active' if request.endpoint == 'public.index' else '' }}">
-                    <a class="sidebar-link" href="{{ url_for('public.index') }}">
-                        <i class="align-middle" data-feather="home"></i> <span class="align-middle">Home</span>
+                {# Composed from splent_framework's nav registry: each feature declares its
+                   own entry in init_feature() with register_nav_item(). Drop a feature from
+                   [tool.splent] and its link disappears with it, instead of leaving a
+                   url_for() here pointing at a blueprint that was never registered. #}
+                {% for item in get_nav_items() %}
+                <li class="sidebar-item {{ 'active' if request.path == item.href else '' }}">
+                    <a class="sidebar-link" href="{{ item.href }}">
+                        <i class="align-middle" data-feather="{{ item.icon }}"></i> <span
+                            class="align-middle">{{ item.label }}</span>
                     </a>
                 </li>
-
-                <li class="sidebar-item {{ 'active' if request.endpoint == 'explore.index' else '' }}">
-                    <a class="sidebar-link" href="{{ url_for('explore.index') }}">
-                        <i class="align-middle" data-feather="search"></i> <span class="align-middle">Explore</span>
-                    </a>
-                </li>
-
-                <li class="sidebar-item {{ 'active' if request.endpoint == 'team.index' else '' }}">
-                    <a class="sidebar-link" href="{{ url_for('team.index') }}">
-                        <i class="align-middle" data-feather="users"></i> <span
-                            class="align-middle">Team</span>
-                    </a>
-                </li>
+                {% endfor %}
 
                 {% if current_user.is_anonymous %}
 
