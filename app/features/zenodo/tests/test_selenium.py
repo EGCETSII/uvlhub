@@ -87,8 +87,12 @@ def test_connection_check_failure_names_the_rejected_step_and_response_code():
         if body["success"]:
             pytest.skip("Zenodo is reachable here, so there is no failure message to inspect")
 
-        assert "Failed to create test deposition on Zenodo" in body["messages"]
-        assert "Response code:" in body["messages"]
+        # messages is a list since the service stopped returning a bare
+        # string on the creation-failure branch.
+        assert isinstance(body["messages"], list)
+        joined = " ".join(body["messages"])
+        assert "Failed to create test deposition on Zenodo" in joined
+        assert "Response code:" in joined
     finally:
         close_driver(driver)
 

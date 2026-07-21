@@ -22,16 +22,13 @@ class ZenodoService(BaseService):
     def get_zenodo_url(self):
 
         FLASK_ENV = os.getenv("FLASK_ENV", "development")
-        ZENODO_API_URL = ""
 
-        if FLASK_ENV == "development":
-            ZENODO_API_URL = os.getenv("ZENODO_API_URL", "https://sandbox.zenodo.org/api/deposit/depositions")
-        elif FLASK_ENV == "production":
-            ZENODO_API_URL = os.getenv("ZENODO_API_URL", "https://zenodo.org/api/deposit/depositions")
+        if FLASK_ENV == "production":
+            default_url = "https://zenodo.org/api/deposit/depositions"
         else:
-            ZENODO_API_URL = os.getenv("ZENODO_API_URL", "https://sandbox.zenodo.org/api/deposit/depositions")
+            default_url = "https://sandbox.zenodo.org/api/deposit/depositions"
 
-        return ZENODO_API_URL
+        return os.getenv("ZENODO_API_URL", default_url)
 
     def get_zenodo_access_token(self):
         return os.getenv("ZENODO_ACCESS_TOKEN")
@@ -63,6 +60,7 @@ class ZenodoService(BaseService):
         """
 
         success = True
+        messages = []  # List to store messages
 
         # Create a test file
         working_dir = os.getenv("WORKING_DIR", "")
@@ -70,53 +68,54 @@ class ZenodoService(BaseService):
         with open(file_path, "w") as f:
             f.write("This is a test file with some content.")
 
-        messages = []  # List to store messages
-
-        # Step 1: Create a deposition on Zenodo
-        data = {
-            "metadata": {
-                "title": "Test Deposition",
-                "upload_type": "dataset",
-                "description": "This is a test deposition created via Zenodo API",
-                "creators": [{"name": "John Doe"}],
-            }
-        }
-
-        response = requests.post(self.ZENODO_API_URL, json=data, params=self.params, headers=self.headers)
-
-        if response.status_code != 201:
-            return jsonify(
-                {
-                    "success": False,
-                    "messages": f"Failed to create test deposition on Zenodo. Response code: {response.status_code}",
+        try:
+            # Step 1: Create a deposition on Zenodo
+            data = {
+                "metadata": {
+                    "title": "Test Deposition",
+                    "upload_type": "dataset",
+                    "description": "This is a test deposition created via Zenodo API",
+                    "creators": [{"name": "John Doe"}],
                 }
-            )
+            }
 
-        deposition_id = response.json()["id"]
+            response = requests.post(self.ZENODO_API_URL, json=data, params=self.params, headers=self.headers)
 
-        # Step 2: Upload an empty file to the deposition
-        data = {"name": "test_file.txt"}
-        files = {"file": open(file_path, "rb")}
-        publish_url = f"{self.ZENODO_API_URL}/{deposition_id}/files"
-        response = requests.post(publish_url, params=self.params, data=data, files=files)
-        files["file"].close()  # Close the file after uploading
+            if response.status_code != 201:
+                return jsonify(
+                    {
+                        "success": False,
+                        "messages": [
+                            f"Failed to create test deposition on Zenodo. Response code: {response.status_code}"
+                        ],
+                    }
+                )
 
-        logger.info(f"Publish URL: {publish_url}")
-        logger.info(f"Params: {self.params}")
-        logger.info(f"Data: {data}")
-        logger.info(f"Files: {files}")
-        logger.info(f"Response Status Code: {response.status_code}")
-        logger.info(f"Response Content: {response.content}")
+            deposition_id = response.json()["id"]
 
-        if response.status_code != 201:
-            messages.append(f"Failed to upload test file to Zenodo. Response code: {response.status_code}")
-            success = False
+            # Step 2: Upload a test file to the deposition
+            data = {"name": "test_file.txt"}
+            publish_url = f"{self.ZENODO_API_URL}/{deposition_id}/files"
+            with open(file_path, "rb") as file:
+                response = requests.post(publish_url, params=self.params, data=data, files={"file": file})
 
-        # Step 3: Delete the deposition
-        response = requests.delete(f"{self.ZENODO_API_URL}/{deposition_id}", params=self.params)
+            logger.info(f"Publish URL: {publish_url}")
+            logger.info(f"Response Status Code: {response.status_code}")
+            logger.info(f"Response Content: {response.content}")
 
-        if os.path.exists(file_path):
-            os.remove(file_path)
+            if response.status_code != 201:
+                messages.append(f"Failed to upload test file to Zenodo. Response code: {response.status_code}")
+                success = False
+
+            # Step 3: Delete the deposition
+            response = requests.delete(f"{self.ZENODO_API_URL}/{deposition_id}", params=self.params)
+
+            if response.status_code != 204:
+                messages.append(f"Failed to delete test deposition on Zenodo. Response code: {response.status_code}")
+                success = False
+        finally:
+            if os.path.exists(file_path):
+                os.remove(file_path)
 
         return jsonify({"success": success, "messages": messages})
 
@@ -146,14 +145,11 @@ class ZenodoService(BaseService):
         logger.info("Dataset sending to Zenodo...")
         logger.info(f"Publication type...{dataset.ds_meta_data.publication_type.value}")
 
+        publication_type = dataset.ds_meta_data.publication_type.value
         metadata = {
             "title": dataset.ds_meta_data.title,
-            "upload_type": "dataset" if dataset.ds_meta_data.publication_type.value == "none" else "publication",
-            "publication_type": (
-                dataset.ds_meta_data.publication_type.value
-                if dataset.ds_meta_data.publication_type.value != "none"
-                else None
-            ),
+            "upload_type": "dataset" if publication_type == "none" else "publication",
+            **({"publication_type": publication_type} if publication_type != "none" else {}),
             "description": dataset.ds_meta_data.description,
             "creators": [
                 {
@@ -194,10 +190,10 @@ class ZenodoService(BaseService):
         data = {"name": uvl_filename}
         user_id = current_user.id if user is None else user.id
         file_path = os.path.join(uploads_folder_name(), f"user_{str(user_id)}", f"dataset_{dataset.id}/", uvl_filename)
-        files = {"file": open(file_path, "rb")}
 
         publish_url = f"{self.ZENODO_API_URL}/{deposition_id}/files"
-        response = requests.post(publish_url, params=self.params, data=data, files=files)
+        with open(file_path, "rb") as file:
+            response = requests.post(publish_url, params=self.params, data=data, files={"file": file})
         if response.status_code != 201:
             error_message = f"Failed to upload files. Error details: {response.json()}"
             raise Exception(error_message)

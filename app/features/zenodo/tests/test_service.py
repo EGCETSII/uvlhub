@@ -137,9 +137,9 @@ def test_create_new_deposition_builds_a_dataset_payload(test_app, clean_database
         metadata = kwargs["json"]["metadata"]
         assert metadata["title"] == "Sample dataset"
         assert metadata["description"] == "A sample dataset description"
-        # publication_type "none" means the deposition is a plain dataset.
+        # publication_type "none" means the deposition is a plain dataset, so the key is omitted.
         assert metadata["upload_type"] == "dataset"
-        assert metadata["publication_type"] is None
+        assert "publication_type" not in metadata
         assert metadata["keywords"] == ["uvlhub"]
         assert metadata["access_right"] == "open"
         assert metadata["license"] == "CC-BY-4.0"
@@ -203,8 +203,14 @@ def test_upload_file_posts_the_uvl_file_to_the_deposition(test_app, clean_databa
         monkeypatch.setattr("app.features.zenodo.services.uploads_folder_name", lambda: str(tmp_path))
         service = ZenodoService()
 
+        sent = {}
+
+        def _capture_post(url, params=None, data=None, files=None):
+            sent["content"] = files["file"].read()
+            return _response(201, {"id": 99, "filename": "model.uvl"})
+
         with patch("app.features.zenodo.services.requests") as requests_mock:
-            requests_mock.post.return_value = _response(201, {"id": 99, "filename": "model.uvl"})
+            requests_mock.post.side_effect = _capture_post
             result = service.upload_file(dataset, 42, feature_model, user=user)
 
         assert result == {"id": 99, "filename": "model.uvl"}
@@ -212,8 +218,9 @@ def test_upload_file_posts_the_uvl_file_to_the_deposition(test_app, clean_databa
         assert url == f"{service.ZENODO_API_URL}/42/files"
         assert kwargs["params"] == service.params
         assert kwargs["data"] == {"name": "model.uvl"}
-        assert kwargs["files"]["file"].read() == b"features\n    Root\n"
-        kwargs["files"]["file"].close()
+        assert sent["content"] == b"features\n    Root\n"
+        # The file handle is managed by the service and closed once the upload returns.
+        assert kwargs["files"]["file"].closed
 
 
 def test_upload_file_raises_when_zenodo_rejects_the_upload(test_app, clean_database, tmp_path, monkeypatch):
@@ -233,6 +240,9 @@ def test_upload_file_raises_when_zenodo_rejects_the_upload(test_app, clean_datab
             requests_mock.post.return_value = _response(413, {"message": "too large"})
             with pytest.raises(Exception, match="Failed to upload files"):
                 service.upload_file(dataset, 42, feature_model, user=user)
+
+        # The file handle is not leaked when the upload is rejected.
+        assert requests_mock.post.call_args[1]["files"]["file"].closed
 
 
 # --------------------------------------------------------------------------
@@ -343,10 +353,12 @@ def test_full_connection_reports_failure_when_the_deposition_cannot_be_created(t
 
         body = response.get_json()
         assert body["success"] is False
-        assert "403" in body["messages"]
+        assert any("403" in message for message in body["messages"])
         # Nothing was created, so nothing may be uploaded or deleted.
         assert requests_mock.post.call_count == 1
         requests_mock.delete.assert_not_called()
+        # The temporary probe file is cleaned up even when creation fails.
+        assert not os.path.exists(str(tmp_path / "test_file.txt"))
 
 
 def test_full_connection_reports_a_failed_upload_but_still_deletes_the_deposition(test_app, tmp_path, monkeypatch):
@@ -365,3 +377,19 @@ def test_full_connection_reports_a_failed_upload_but_still_deletes_the_depositio
             f"{service.ZENODO_API_URL}/66",
             params=service.params,
         )
+
+
+def test_full_connection_reports_a_failed_cleanup_delete(test_app, tmp_path, monkeypatch):
+    monkeypatch.setenv("WORKING_DIR", str(tmp_path))
+    with test_app.app_context():
+        service = ZenodoService()
+        with patch("app.features.zenodo.services.requests") as requests_mock:
+            requests_mock.post.side_effect = [_response(201, {"id": 77}), _response(201, {"id": 1})]
+            requests_mock.delete.return_value = _response(500)
+            response = service.test_full_connection()
+
+        body = response.get_json()
+        # A failed delete leaves an orphan deposition behind, so it is a failure.
+        assert body["success"] is False
+        assert any("delete" in message and "500" in message for message in body["messages"])
+        assert not os.path.exists(str(tmp_path / "test_file.txt"))

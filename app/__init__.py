@@ -64,4 +64,4 @@ def _setup_jinja_globals(app: Flask) -> None:
     app.jinja_env.globals["get_nav_items"] = get_nav_items
 
 
-app = create_app()
+app = create_app(os.getenv("FLASK_ENV", "development"))

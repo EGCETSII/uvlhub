@@ -49,7 +49,7 @@ def test_test_endpoint_reports_failure_when_the_deposition_cannot_be_created(tes
     assert response.status_code == 200
     body = response.get_json()
     assert body["success"] is False
-    assert "401" in body["messages"]
+    assert any("401" in message for message in body["messages"])
     requests_mock.delete.assert_not_called()
 
 
