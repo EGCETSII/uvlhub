@@ -30,25 +30,17 @@ def locust(feature):
                 )
 
     def resolve_locustfiles(feature):
-        """Return the -f argument: one feature's file, or every feature's.
+        """Return the -f argument: one feature's file, or None for all of them.
 
-        Locust takes a comma-separated list, so the whole-project run is
-        assembled here rather than delegated to splent_framework's
-        locustfile_bootstrap. That bootstrap still globs app/modules/*, a
-        directory this project no longer has, so importing it raises
-        "ValueError: No User class found!" before locust starts.
+        The whole-project run is delegated to splent_framework's
+        locustfile_bootstrap, which since 1.7.1 discovers
+        app/features/*/tests/locustfile.py itself. In Docker, omitting -f lets
+        the locust entrypoint resolve the bootstrap from site-packages; in the
+        console branch the bootstrap module path is passed explicitly.
         """
         if feature:
             return os.path.join(features_dir, feature, "tests", "locustfile.py")
-
-        paths = sorted(
-            os.path.join(features_dir, name, "tests", "locustfile.py")
-            for name in os.listdir(features_dir)
-            if os.path.isfile(os.path.join(features_dir, name, "tests", "locustfile.py"))
-        )
-        if not paths:
-            raise click.UsageError(f"No locustfile found under {features_dir}/*/tests/.")
-        return ",".join(paths)
+        return None
 
     def run_docker_locust(volume_name, network_name, feature):
         """Build and run the Locust container with the specified volume and network."""
@@ -102,7 +94,11 @@ def locust(feature):
             "WORKING_DIR=/workspace/",
             "locust-image",
         ]
-        up_command.extend(["-f", resolve_locustfiles(feature)])
+        locustfile = resolve_locustfiles(feature)
+        if locustfile:
+            up_command.extend(["-f", locustfile])
+        # With no -f, docker/entrypoints/locust_entrypoint.sh resolves the
+        # framework bootstrap, which discovers every feature's locustfile.
 
         click.echo(f"Docker Run command: {' '.join(up_command)}")
         subprocess.run(up_command, check=True)
@@ -121,7 +117,12 @@ def locust(feature):
             click.echo("Locust is already running.")
             return
 
-        locust_command = ["locust", "-f", resolve_locustfiles(feature)]
+        locustfile = resolve_locustfiles(feature)
+        if not locustfile:
+            from splent_framework.bootstraps import locustfile_bootstrap
+
+            locustfile = locustfile_bootstrap.__file__
+        locust_command = ["locust", "-f", locustfile]
         click.echo(f"Locust command: {' '.join(locust_command)}")
         subprocess.Popen(
             locust_command,
