@@ -18,5 +18,5 @@ def index():
 
 @explore_bp.route("/explore", methods=["POST"])
 def search():
-    datasets = explore_service.filter(**(request.get_json() or {}))
+    datasets = explore_service.filter(**(request.get_json(silent=True) or {}))
     return jsonify([dataset.to_dict() for dataset in datasets])

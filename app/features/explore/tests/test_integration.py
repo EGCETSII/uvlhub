@@ -122,7 +122,12 @@ def test_search_returns_an_empty_list_when_nothing_matches(test_app, test_client
     assert response.get_json() == []
 
 
-def test_search_without_a_json_body_is_rejected(test_client):
-    """Known oddity: ``request.get_json() or {}`` raises before the fallback applies."""
+def test_search_without_a_json_body_behaves_like_an_unfiltered_search(test_app, test_client):
+    _seed_corpus(test_app)
     response = test_client.post("/explore")
-    assert response.status_code == 415
+    assert response.status_code == 200
+    assert [dataset["title"] for dataset in response.get_json()] == [
+        "Home Banking",
+        "Car Configurator",
+        "Smart Home",
+    ]

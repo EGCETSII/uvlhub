@@ -19,8 +19,17 @@ function send_query() {
 
     const filters = document.querySelectorAll('#filters input, #filters select, #filters [type="radio"]');
 
+    // Sequencing guard: each new query supersedes the previous one, so the
+    // in-flight request is aborted before a new one starts. Only the latest
+    // response can repaint the result list.
+    let inFlightController = null;
+
     filters.forEach(filter => {
-        filter.addEventListener('input', () => {
+        // Selects and radios do not fire "input" on every browser (Chrome only
+        // fires "change" for a programmatic option click), so both events run
+        // the search. When a control fires both, the abort guard collapses
+        // them into a single repaint.
+        ['input', 'change'].forEach(eventType => filter.addEventListener(eventType, () => {
             const csrfToken = document.getElementById('csrf_token').value;
 
             const searchCriteria = {
@@ -32,12 +41,18 @@ function send_query() {
 
             console.log(document.querySelector('#publication_type').value);
 
+            if (inFlightController !== null) {
+                inFlightController.abort();
+            }
+            inFlightController = new AbortController();
+
             fetch('/explore', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify(searchCriteria),
+                signal: inFlightController.signal,
             })
                 .then(response => response.json())
                 .then(data => {
@@ -136,8 +151,14 @@ function send_query() {
 
                         document.getElementById('results').appendChild(card);
                     });
+                })
+                .catch(error => {
+                    // Aborted requests are superseded queries, not failures.
+                    if (error.name !== 'AbortError') {
+                        throw error;
+                    }
                 });
-        });
+        }));
     });
 }
 

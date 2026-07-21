@@ -2,7 +2,7 @@ import re
 
 import unidecode
 from splent_framework.repositories.BaseRepository import BaseRepository
-from sqlalchemy import any_, or_
+from sqlalchemy import or_
 
 from app.features.dataset.models import Author, DataSet, DSMetaData, PublicationType
 from app.features.featuremodel.models import FeatureModel, FMMetaData
@@ -51,7 +51,7 @@ class ExploreRepository(BaseRepository):
                 datasets = datasets.filter(DSMetaData.publication_type == matching_type.name)
 
         if tags:
-            datasets = datasets.filter(DSMetaData.tags.ilike(any_(f"%{tag}%" for tag in tags)))
+            datasets = datasets.filter(or_(*(DSMetaData.tags.ilike(f"%{tag}%") for tag in tags)))
 
         # Order by created_at
         if sorting == "oldest":

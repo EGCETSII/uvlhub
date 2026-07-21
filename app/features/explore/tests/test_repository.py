@@ -3,7 +3,6 @@
 from datetime import datetime
 
 import pytest
-from sqlalchemy.exc import ProgrammingError
 
 from app import db
 from app.features.auth.models import User
@@ -186,10 +185,19 @@ def test_unknown_publication_type_is_ignored(test_app, clean_database):
         )
 
 
-def test_tags_argument_is_currently_broken(test_app, clean_database):
-    """Known bug: the tags filter passes a generator to any_(), producing invalid SQL."""
+def test_tags_narrow_the_results(test_app, clean_database):
     with test_app.app_context():
         _seed_corpus()
-        with pytest.raises(ProgrammingError):
-            ExploreRepository().filter("home", tags=["iot"])
-        db.session.rollback()
+        repository = ExploreRepository()
+        assert _titles(repository.filter("", tags=["iot"])) == ["Smart Home"]
+        assert _titles(repository.filter("", tags=["automotive", "finance"])) == ["Home Banking", "Car Configurator"]
+        assert _titles(repository.filter("", tags=["nonexistent"])) == []
+
+
+def test_tags_combine_with_the_query(test_app, clean_database):
+    with test_app.app_context():
+        _seed_corpus()
+        repository = ExploreRepository()
+        # "home" alone matches two datasets; the tag narrows them to one.
+        assert _titles(repository.filter("home")) == ["Home Banking", "Smart Home"]
+        assert _titles(repository.filter("home", tags=["iot"])) == ["Smart Home"]

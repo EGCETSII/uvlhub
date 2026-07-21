@@ -11,12 +11,10 @@ SORTINGS = ["newest", "oldest"]
 
 PUBLICATION_TYPES = ["any", "journal article", "conference paper", "book", "software documentation"]
 
-# NOTE: the "tags" filter is deliberately left empty. Sending a non-empty tag
-# list makes ExploreRepository.filter build invalid SQL and the endpoint answers
-# 500 (see app/features/explore/repositories.py, the any_() call). Load tests
-# must not be red because of a product bug, so that branch is not exercised here
-# until the bug is fixed.
-TAG_SETS = [[]]
+# Tag sets mixing the seeded tags ("tag1", "tag2") with one that matches
+# nothing, plus the unfiltered branch, so both populated and empty tag results
+# are exercised.
+TAG_SETS = [[], ["tag1"], ["tag2"], ["tag1", "tag2"], ["nonexistent-tag"]]
 
 
 class ExploreBehavior(TaskSet):

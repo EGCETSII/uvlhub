@@ -6,25 +6,13 @@ seeded development database rather than the test database. Run with::
 
     rosemary test explore --e2e
 
-Note on the xfailed tests below. The result list is rendered client side by
+Note on request sequencing. The result list is rendered client side by
 ``app/features/explore/assets/js/scripts.js``, which fires one POST /explore
-per input event and repaints the list from whichever response arrives. The
-requests are never sequenced or cancelled, so responses are applied in arrival
-order rather than request order. Typing "file7" issues five requests, and the
-broad "f" one returns the largest payload and lands last, overwriting the
-correct result: the page ends up showing 4 datasets for a query that matches 1.
-
-Verified directly by wrapping window.fetch in the browser. All five requests
-are sent with the right bodies and no javascript error is raised; only the
-repaint order is wrong. Dispatching a single further input event afterwards
-settles the page on the correct result.
-
-The backend is not at fault: POST /explore returns 4, 1 and 0 results for the
-empty, "file7" and unmatched queries respectively.
-
-These tests describe the behaviour the page is meant to have. They turn green
-once the client sequences its requests, for example by discarding responses
-from a superseded query.
+per filter event (input or change). The client keeps a single in-flight
+request and aborts it (via an AbortController) whenever a new event starts
+another one, so only the response to the latest query can repaint the list.
+Typing "file7" still issues five requests, but the superseded ones are
+cancelled and the page settles on the result of the full query.
 """
 
 import pytest
@@ -54,10 +42,6 @@ NARROWING_QUERY_TITLE = "Sample dataset 3"
 UNMATCHED_QUERY = "nonexistentquery"
 
 RESULT_CARDS = (By.CSS_SELECTOR, "#results > div")
-
-needs_request_sequencing = pytest.mark.xfail(
-    reason="explore repaints from whichever POST /explore response lands last, so a superseded query can win",
-)
 
 
 def expected_counter_text(count):
@@ -144,7 +128,6 @@ def test_explore_lists_every_synchronized_dataset_by_default():
         close_driver(driver)
 
 
-@needs_request_sequencing
 def test_typing_a_query_narrows_the_visible_results():
     driver = initialize_driver()
     try:
@@ -160,7 +143,6 @@ def test_typing_a_query_narrows_the_visible_results():
         close_driver(driver)
 
 
-@needs_request_sequencing
 def test_a_query_without_matches_shows_the_not_found_panel():
     driver = initialize_driver()
     try:
@@ -180,7 +162,6 @@ def test_a_query_without_matches_shows_the_not_found_panel():
         close_driver(driver)
 
 
-@needs_request_sequencing
 def test_clearing_the_filters_restores_the_full_result_list():
     driver = initialize_driver()
     try:
@@ -201,7 +182,6 @@ def test_clearing_the_filters_restores_the_full_result_list():
         close_driver(driver)
 
 
-@needs_request_sequencing
 def test_filtering_by_a_publication_type_nobody_uses_empties_the_result_list():
     driver = initialize_driver()
     try:
