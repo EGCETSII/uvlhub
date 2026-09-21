@@ -17,6 +17,7 @@ features = [
     "public",
     "team",
     "zenodo",
+    "notepad",
 ]
 features_dev = [
     "webhook",
