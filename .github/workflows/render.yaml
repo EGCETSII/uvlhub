@@ -1,0 +1,53 @@
+name: Deploy to Render
+
+on:
+  workflow_run:
+    workflows: ["Codacy CI"]
+    types:
+      - completed
+
+jobs:
+
+  deploy:
+    name: Deploy to Render
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v5
+
+      - name: Check PR was approved and merged
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER=$(gh pr list --search "${{ github.sha }}" --state merged --json number --jq '.[0].number')
+
+          if [ -z "$PR_NUMBER" ]; then
+            echo "::error::No se encontró un PR mergeado para este commit."
+            exit 1
+          fi
+
+          REVIEWS=$(gh pr view "$PR_NUMBER" --json reviews --jq '[.reviews[] | select(.state=="APPROVED")] | length')
+
+          if [ "$REVIEWS" -eq 0 ]; then
+            echo "::error::El PR #$PR_NUMBER no tiene ninguna aprobación."
+            exit 1
+          fi
+
+          echo "PR #$PR_NUMBER verificado: mergeado y aprobado."
+
+      - name: Verify trigger was a tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if ! git ls-remote --tags origin | grep -q "refs/tags/${{ github.event.workflow_run.head_branch }}$"; then
+            echo "::error::Este despliegue solo se permite para tags, no para main u otras ramas."
+            exit 1
+          fi
+
+      - name: Deploy to Render
+        runs-on: ubuntu-24.04
+        if: github.event.workflow_run.conclusion == 'success'
+        env:
+          deploy_url: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          curl "$deploy_url"
