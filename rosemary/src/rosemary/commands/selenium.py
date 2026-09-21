@@ -88,7 +88,8 @@ def selenium(feature, driver):
 
     except click.UsageError as e:
         raise e
-    except subprocess.CalledProcessError:
-        pass
+    except subprocess.CalledProcessError as e:
+        click.echo(click.style(f"Selenium tests failed: {e}", fg="red"))
+        raise SystemExit(e.returncode)
     except Exception as e:
         click.echo(click.style(f"Unexpected error: {e}", fg="red"))

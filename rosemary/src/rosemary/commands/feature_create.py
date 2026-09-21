@@ -69,18 +69,28 @@ def feature_create(name: str) -> None:
     click.echo(click.style(f"Feature '{name}' created successfully.", fg="green"))
 
     # Match host UID/GID so files created from inside the dev container are owned
-    # by the developer on the host (typical Docker dev workflow).
+    # by the developer on the host (typical Docker dev workflow). Only root can
+    # give files away; on a manual installation the command runs as the
+    # developer, the files already belong to them, and chown would raise
+    # PermissionError after the feature has been created, so it is skipped.
     uid, gid = 1000, 1000
-    os.chown(feature_path, uid, gid)
+    give_away = getattr(os, "geteuid", lambda: -1)() == 0
+
+    def _own(path: str) -> None:
+        if give_away:
+            os.chown(path, uid, gid)
+
+    _own(feature_path)
     os.chmod(feature_path, stat.S_IRWXU | stat.S_IRWXG | stat.S_IROTH | stat.S_IXOTH)
     for root, dirs, files in os.walk(feature_path):
         for d in dirs:
             p = os.path.join(root, d)
-            os.chown(p, uid, gid)
+            _own(p)
             os.chmod(p, stat.S_IRWXU | stat.S_IRWXG | stat.S_IROTH | stat.S_IXOTH)
         for f in files:
             p = os.path.join(root, f)
-            os.chown(p, uid, gid)
+            _own(p)
             os.chmod(p, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH)
 
-    click.echo(click.style(f"Feature '{name}' permissions changed successfully.", fg="green"))
+    ownership = "" if give_away else " (ownership left as is)"
+    click.echo(click.style(f"Feature '{name}' permissions changed successfully.{ownership}", fg="green"))

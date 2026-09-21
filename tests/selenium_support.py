@@ -4,7 +4,7 @@ Since splent_framework 1.7.1 the framework itself can drive a Selenium Grid:
 ``initialize_driver`` attaches to ``SELENIUM_GRID_URL`` over
 ``webdriver.Remote``, and ``get_host_for_selenium_testing`` honours
 ``SELENIUM_TARGET_URL``. This module is now a thin product-level wrapper that
-supplies uvlhub's defaults and its deterministic viewport, so the ten e2e
+supplies uvlhub's defaults and its deterministic viewport, so the eight e2e
 files keep a single import point.
 
 What it adds on top of the framework helpers:

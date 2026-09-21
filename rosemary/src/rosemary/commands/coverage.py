@@ -59,6 +59,7 @@ def coverage(feature, keyword, selected, all_, html):
         subprocess.run(cmd, check=True)
     except subprocess.CalledProcessError as e:
         click.echo(click.style(f"pytest failed: {e}", fg="red"))
+        raise SystemExit(e.returncode)
 
 
 def _resolve_target(feature):

@@ -13,9 +13,12 @@ def db_console():
     mariadb_user = os.getenv("MARIADB_USER")
     mariadb_password = os.getenv("MARIADB_PASSWORD")
     mariadb_database = os.getenv("MARIADB_DATABASE")
+    mariadb_port = os.getenv("MARIADB_PORT", "3306")
 
     # Build the command to connect to MariaDB
-    mariadb_connect_cmd = f"mysql -h{mariadb_hostname} -u{mariadb_user} -p{mariadb_password} {mariadb_database}"
+    mariadb_connect_cmd = (
+        f"mysql -h{mariadb_hostname} -P{mariadb_port} -u{mariadb_user} -p{mariadb_password} {mariadb_database}"
+    )
 
     # Execute the command
     try:

@@ -151,6 +151,8 @@ def locust(feature):
 
         try:
             web_container = client.containers.get("web_app_container")
+            if web_container.status != "running":
+                raise ValueError(f"web_app_container exists but is {web_container.status}; start the dev stack first")
             volume_name = next(
                 (
                     mount.get("Name") or mount.get("Source")
@@ -161,7 +163,7 @@ def locust(feature):
             )
 
             if not volume_name:
-                raise ValueError("No volume or bind mount found mounted on /app")
+                raise ValueError("No volume or bind mount found mounted on /workspace")
 
             # Derive the network from the running web container instead of assuming
             # one. Compose names it "<project>_uvlhub_network", and the project

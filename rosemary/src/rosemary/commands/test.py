@@ -11,7 +11,7 @@ pyramid::
     @pytest.mark.load         locust load tests (driven by ``rosemary locust``)
 
 Each flag toggles one marker on. Combining flags ORs them. The default
-(``rosemary test`` with no flag) runs unit + service + integration — the
+(``rosemary test`` with no flag) runs unit + repository + service + integration — the
 fast pyramid layers that don't depend on external infrastructure.
 """
 
@@ -64,6 +64,7 @@ def test(feature, keyword, selected, all_, load_):
         subprocess.run(cmd, check=True)
     except subprocess.CalledProcessError as e:
         click.echo(click.style(f"pytest failed: {e}", fg="red"))
+        raise SystemExit(e.returncode)
 
 
 def _resolve_target(feature):

@@ -10,6 +10,7 @@ from splent_framework.managers.error_handler_manager import ErrorHandlerManager
 from splent_framework.managers.jinja_manager import JinjaManager
 from splent_framework.managers.logging_manager import LoggingManager
 from splent_framework.nav.nav_registry import get_nav_items
+from sqlalchemy.engine import make_url
 
 from app.feature_loader import register_features
 
@@ -29,6 +30,7 @@ def create_app(config_name: str = "development") -> Flask:
     app = Flask(__name__)
 
     ConfigManager(app).load_config(config_name=config_name)
+    _apply_database_port(app)
     db.init_app(app)
     migrate.init_app(app, db)
 
@@ -39,6 +41,33 @@ def create_app(config_name: str = "development") -> Flask:
     _setup_jinja_globals(app)
 
     return app
+
+
+def _apply_database_port(app: Flask) -> None:
+    """Honour ``MARIADB_PORT`` in the SQLAlchemy URI.
+
+    splent_framework's default configuration builds ``SQLALCHEMY_DATABASE_URI``
+    from the ``MARIADB_*`` variables but hardcodes port 3306. A database that
+    listens elsewhere, such as the one filess.io provides for the Render
+    deployment, is then reachable by ``scripts/wait-for-db.sh`` and the
+    entrypoints, which pass ``-P $MARIADB_PORT``, and unreachable by the
+    application, which fails at ``flask db upgrade`` with ``Can't connect to
+    MySQL server on '<host>' ([Errno 111] Connection refused)``. Rewrite the
+    port here so every command reads the same variable. Only a MySQL/MariaDB
+    URI with a host is touched: the variable means nothing to SQLite.
+    """
+    port = os.getenv("MARIADB_PORT")
+    uri = app.config.get("SQLALCHEMY_DATABASE_URI")
+    if not port or not uri:
+        return
+    url = make_url(uri)
+    if not url.host or not url.drivername.startswith("mysql"):
+        return
+    try:
+        port_number = int(port)
+    except ValueError as exc:
+        raise RuntimeError(f"MARIADB_PORT must be an integer, got {port!r}") from exc
+    app.config["SQLALCHEMY_DATABASE_URI"] = url.set(port=port_number).render_as_string(hide_password=False)
 
 
 def _setup_jinja_globals(app: Flask) -> None:

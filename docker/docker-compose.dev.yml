@@ -1,3 +1,10 @@
+# Fixed project name. Without it Compose names the project after the directory
+# that holds this file, "docker", so its network and volume become
+# docker_uvlhub_network and docker_db_data and collide with any other project
+# whose compose files also live in a docker/ folder: "docker compose up" would
+# then recreate that project's containers and mount its database volume here.
+name: uvlhub
+
 services:
   web:
     container_name: web_app_container

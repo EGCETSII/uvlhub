@@ -11,6 +11,10 @@ def load_env(file)
     File.readlines(file).each do |line|
       key, value = line.strip.split('=', 2)
       if key && value
+        # .env values may be quoted, as in FLASK_APP_NAME="UVLHUB.IO(dev)".
+        # dotenv strips the quotes; do the same, or the quotes reach Ansible
+        # and the application shows them in its title.
+        value = value.strip.sub(/\A(["'])(.*)\1\z/, '\2')
         ENV[key] = value
         env_vars[key] = value
       end
