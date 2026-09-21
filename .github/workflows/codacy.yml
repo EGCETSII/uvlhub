@@ -1,3 +1,13 @@
+name: Codacy CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
 jobs:
   codacy:
     runs-on: ubuntu-24.04
