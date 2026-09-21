@@ -51,7 +51,7 @@ jobs:
     - name: Security audit of dependencies
       run: |
         pip install pip-audit
-        pip-audit --skip-editable
+        pip-audit -r requirements.txt
 
     - name: Run tests with coverage
       run: |
