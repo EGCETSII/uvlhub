@@ -11,6 +11,9 @@ on:
 jobs:
   codacy:
     runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        python-version: ["3.13", "3.14"]
     services:
       mariadb:
         image: mariadb:12.0.2
@@ -31,16 +34,26 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v5
 
-    - name: Set up Python
+    - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v6
       with:
-        python-version: '3.13'
+        python-version: ${{ matrix.python-version }}
 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install -e ./rosemary
+    
+    - name: Check outdated dependencies
+      run: pip list --outdated
+
+     # EJERCICIO 3:
+      # Buscar vulnerabilidades conocidas en las dependencias
+    - name: Audit dependencies
+      run: |
+        python -m pip install pip-audit
+        pip-audit -r requirements.txt
 
     - name: Run tests with coverage
       run: |
@@ -55,6 +68,7 @@ jobs:
         MARIADB_PASSWORD: uvlhub_password
 
     - name: Upload coverage to Codacy
+      if: matrix.python-version == '3.13'
       run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r coverage.xml
       env:
         CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
