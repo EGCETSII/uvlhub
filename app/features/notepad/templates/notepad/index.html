@@ -1,0 +1,41 @@
+{% extends "base_template.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Mis Notas (Notepad C.R.U.D.)</h2>
+
+    <!-- Formulario para crear notas -->
+    <form method="POST" action="{{ url_for('notepad.create') }}">
+        {{ form.hidden_tag() }}
+        <div class="mb-3">
+            <label class="form-label">Título</label>
+            {{ form.title(class="form-control") }}
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Contenido</label>
+            {{ form.body(class="form-control", rows=3) }}
+        </div>
+        {{ form.submit(class="btn btn-primary") }}
+    </form>
+
+    <hr>
+
+    <!-- Listado de notas con el formulario de borrado añadido -->
+    <h3>Notas creadas</h3>
+    <ul class="list-group mt-3">
+        {% for notepad in notepads %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+                <h5>{{ notepad.title }}</h5>
+                <p class="mb-0">{{ notepad.body }}</p>
+            </div>
+            <form method="POST" action="{{ url_for('notepad.delete', notepad_id=notepad.id) }}">
+                <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+            </form>
+        </li>
+        {% else %}
+        <li class="list-group-item text-muted">No hay notas creadas aún.</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}
