@@ -17,7 +17,7 @@ def db_console():
 
     # Build the command to connect to MariaDB
     mariadb_connect_cmd = (
-        f"mysql -h{mariadb_hostname} -P{mariadb_port} -u{mariadb_user} -p{mariadb_password} {mariadb_database}"
+        f"mysql -h{mariadb_hostname} -P{mariadb_port} -u{mariadb_user} -p{mariadb_password} {mariadb_database} --disable-ssl"
     )
 
     # Execute the command
