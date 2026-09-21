@@ -1,0 +1,48 @@
+"""End-to-end browser tests for the notepad feature.
+
+Driven by the selenium grid started by::
+
+    docker compose -f docker/docker-compose.dev.yml up
+
+Run with::
+
+    rosemary test notepad --e2e
+
+The driver comes from ``tests/selenium_support``, not from
+``splent_framework.selenium.common``. The framework helper builds a local
+Chrome through webdriver_manager, and there is no browser inside
+web_app_container, so it cannot reach the grid. See that module's docstring.
+
+These tests run against the live application and the seeded development
+database, not the test database. There is no fixture and no reset between
+tests, so keep them read-only or clean up after yourself.
+"""
+import pytest
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+
+from tests.selenium_support import close_driver, get_host_for_selenium_testing, initialize_driver
+
+pytestmark = pytest.mark.e2e
+
+
+def test_notepad_index():
+    driver = initialize_driver()
+    try:
+        host = get_host_for_selenium_testing()
+        driver.get(f"{host}/notepad")
+        WebDriverWait(driver, 15).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
+
+        # Scaffolding a feature does not load it: it has to be declared in
+        # [tool.splent] in the root pyproject.toml first. Until then this route
+        # answers the 404 page, which also has a body, so assert the real page
+        # rendered rather than letting the test pass on a 404.
+        assert "Page not found" not in driver.title, (
+            "/notepad rendered the 404 page. Add 'notepad' to [tool.splent] "
+            "in the root pyproject.toml and restart the app."
+        )
+
+        # TODO: assert on what the user actually sees on this page.
+    finally:
+        close_driver(driver)
