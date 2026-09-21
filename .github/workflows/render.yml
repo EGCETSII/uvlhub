@@ -1,16 +1,16 @@
 name: Deploy to Render
 
 on:
-    push:
-      branches:
-        - main
-    pull_request:
-      branches:
-        - main
+  pull_request:
+    branches:
+      - main
+    types:
+      - closed
 
 jobs:
 
   deploy:
+    if: github.event.pull_request.merged == true
     name: Deploy to Render
     runs-on: ubuntu-24.04
     steps:
