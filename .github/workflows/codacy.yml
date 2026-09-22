@@ -11,6 +11,9 @@ on:
 jobs:
   codacy:
     runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        python-version:["3.13","3.14"]
     services:
       mariadb:
         image: mariadb:12.0.2
@@ -58,3 +61,11 @@ jobs:
       run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r coverage.xml
       env:
         CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
+
+    - name: Verify outdated versions
+      run: pip list --outdated
+
+    - name: Análisis de seguridad con pip-audit
+      run: |
+          pip install pip-audit
+          pip-audit
