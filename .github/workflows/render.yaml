@@ -7,10 +7,10 @@ on:
       - completed
 
 jobs:
-
   deploy:
     name: Deploy to Render
     runs-on: ubuntu-24.04
+    if: github.event.workflow_run.conclusion == 'success'
     steps:
       - name: Check out the repo
         uses: actions/checkout@v5
@@ -45,7 +45,6 @@ jobs:
           fi
 
       - name: Deploy to Render
-        runs-on: ubuntu-24.04
         if: github.event.workflow_run.conclusion == 'success'
         env:
           deploy_url: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
