@@ -50,3 +50,4 @@ jobs:
           deploy_url: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
         run: |
           curl "$deploy_url"
+# small change for testing functionality of the workflow.
